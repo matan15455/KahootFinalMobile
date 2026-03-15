@@ -9,11 +9,11 @@ export default function Index() {
 
   useEffect(() => {
     if (!loading) {
-      if (isAuthenticated) {
-        router.replace('/game/home');
-      } else {
-        router.replace('/auth/login');
-      }
+       if (isAuthenticated) {
+         router.replace('/main/my-quizzes');
+     } else {
+         router.replace('/auth/login');
+     }
     }
   }, [isAuthenticated, loading]);
 
