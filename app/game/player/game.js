@@ -69,7 +69,6 @@ export default function PlayerGame() {
     socket.emit('answerQuestion', { roomId, answerText });
   };
 
-  // ── Guards ──────────────────────────────────────────
   if (!room) {
     return (
       <View style={styles.container}>
@@ -79,31 +78,22 @@ export default function PlayerGame() {
     );
   }
 
-  // ── END ─────────────────────────────────────────────
   if (room.phase === 'END') {
     return (
-      <ScrollView
-        style={styles.scrollContainer}
-        contentContainerStyle={styles.scrollContent}
-      >
+      <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.scrollContent}>
         <Text style={styles.phaseTitle}>🏁 המשחק הסתיים!</Text>
         <ScoreBoard players={room.players} />
-        <TouchableOpacity
-          style={styles.homeBtn}
-          onPress={() => router.replace('/main/join-room')}
-        >
+        <TouchableOpacity style={styles.homeBtn} onPress={() => router.replace('/main/join-room')}>
           <Text style={styles.homeBtnText}>חזור לדף הבית</Text>
         </TouchableOpacity>
       </ScrollView>
     );
   }
 
-  // ── SUMMARY ─────────────────────────────────────────
   if (room.phase === 'SUMMARY' && room.summary) {
     return (
       <View style={styles.container}>
         <Text style={styles.phaseTitle}>תוצאות השאלה</Text>
-
         <FlatList
           data={Object.entries(room.summary.answersCount)}
           keyExtractor={([ans]) => ans}
@@ -131,8 +121,6 @@ export default function PlayerGame() {
             );
           }}
         />
-
-        {/* תוצאה אישית */}
         <View style={styles.myResultBadge}>
           {selectedAnswer === room.summary.correctAnswer ? (
             <Text style={styles.myResultCorrect}>✅ תשובה נכונה!</Text>
@@ -146,20 +134,15 @@ export default function PlayerGame() {
     );
   }
 
-  // ── SCORES ──────────────────────────────────────────
   if (room.phase === 'SCORES') {
     return (
-      <ScrollView
-        style={styles.scrollContainer}
-        contentContainerStyle={styles.scrollContent}
-      >
+      <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.scrollContent}>
         <ScoreBoard players={room.players} />
         <Text style={styles.waitingText}>⏳ ממתינים למארח להמשיך…</Text>
       </ScrollView>
     );
   }
 
-  // ── QUESTION ─────────────────────────────────────────
   if (room.phase === 'QUESTION' && room.question) {
     const danger = timeLeft !== null && timeLeft <= 5;
     const warning = timeLeft !== null && timeLeft <= 10 && timeLeft > 5;
@@ -168,37 +151,29 @@ export default function PlayerGame() {
       <View style={styles.container}>
         <Text style={styles.questionIndex}>שאלה {room.questionIndex + 1}</Text>
 
-        {/* Timer */}
         {timeLeft !== null && (
-          <View style={[
-            styles.timerWrap,
-            danger && styles.timerDanger,
-            warning && styles.timerWarning,
-          ]}>
+          <View style={[styles.timerWrap, danger && styles.timerDanger, warning && styles.timerWarning]}>
             <Text style={styles.timerText}>{timeLeft}</Text>
           </View>
         )}
 
-        {/* Question */}
         <View style={styles.questionCard}>
           <Text style={styles.questionText}>{room.question.text}</Text>
         </View>
 
-        {/* Status אחרי תשובה */}
         {selectedAnswer && (
           <View style={styles.answeredBadge}>
             <Text style={styles.answeredText}>✔ ענית: {selectedAnswer}</Text>
           </View>
         )}
 
-        {/* Answers */}
         <View style={styles.answersGrid}>
           {room.question.answers.map((ans, index) => {
             const isSelected = selectedAnswer === ans.text;
             const isDisabled = !!selectedAnswer;
             return (
               <TouchableOpacity
-                key={index}
+                key={String(index)}
                 style={[
                   styles.answerBtn,
                   { backgroundColor: ANSWER_COLORS[index % ANSWER_COLORS.length] },
@@ -218,7 +193,6 @@ export default function PlayerGame() {
     );
   }
 
-  // ── LOBBY / WAITING ──────────────────────────────────
   return (
     <View style={styles.container}>
       <Text style={styles.loadingText}>⏳ מחכים שהמארח יתחיל…</Text>
@@ -232,7 +206,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#070e1a',
     paddingTop: 60,
     paddingHorizontal: 20,
-    alignItems: 'center',
   },
   scrollContainer: {
     flex: 1,
@@ -257,8 +230,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
   },
-
-  // Timer
   timerWrap: {
     width: 80,
     height: 80,
@@ -269,31 +240,24 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
+    alignSelf: 'center',
   },
-  timerWarning: {
-    borderColor: '#f59e0b',
-    backgroundColor: 'rgba(245,158,11,0.15)',
-  },
-  timerDanger: {
-    borderColor: '#ef4444',
-    backgroundColor: 'rgba(239,68,68,0.15)',
-  },
+  timerWarning: { borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.15)' },
+  timerDanger: { borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.15)' },
   timerText: { color: '#eaf0ff', fontSize: 30, fontWeight: '900' },
-
-  // Question
   questionIndex: {
     color: 'rgba(234,240,255,0.5)',
     fontSize: 14,
     fontWeight: '600',
     marginBottom: 8,
     letterSpacing: 1,
+    textAlign: 'center',
   },
   questionCard: {
     backgroundColor: 'rgba(255,255,255,0.07)',
     borderRadius: 20,
     padding: 20,
     marginBottom: 16,
-    width: '100%',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.12)',
   },
@@ -304,8 +268,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 26,
   },
-
-  // Answered badge
   answeredBadge: {
     backgroundColor: 'rgba(34,211,238,0.12)',
     borderWidth: 1,
@@ -314,6 +276,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     marginBottom: 12,
+    alignSelf: 'center',
   },
   answeredText: {
     color: '#22d3ee',
@@ -321,10 +284,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textAlign: 'center',
   },
-
-  // Answers grid
   answersGrid: {
-    width: '100%',
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 10,
@@ -338,7 +298,6 @@ const styles = StyleSheet.create({
     minHeight: 80,
   },
   answerSelected: {
-    opacity: 1,
     borderWidth: 3,
     borderColor: '#fff',
   },
@@ -351,9 +310,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     textAlign: 'center',
   },
-
-  // Summary
-  summaryList: { width: '100%', gap: 10, paddingBottom: 10 },
+  summaryList: { gap: 10, paddingBottom: 10 },
   summaryItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -389,29 +346,22 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   summaryCount: { color: '#eaf0ff', fontSize: 15, fontWeight: '800' },
-
-  // My result
   myResultBadge: {
     marginTop: 16,
     padding: 14,
     borderRadius: 16,
     backgroundColor: 'rgba(255,255,255,0.06)',
-    width: '100%',
     alignItems: 'center',
   },
   myResultCorrect: { color: '#34d399', fontSize: 18, fontWeight: '900' },
   myResultWrong: { color: '#f87171', fontSize: 18, fontWeight: '900' },
   myResultTimeout: { color: 'rgba(234,240,255,0.5)', fontSize: 18, fontWeight: '700' },
-
-  // Waiting
   waitingText: {
     color: 'rgba(234,240,255,0.5)',
     fontSize: 15,
     marginTop: 20,
     textAlign: 'center',
   },
-
-  // Home / End
   homeBtn: {
     backgroundColor: 'rgba(124,58,237,0.25)',
     borderWidth: 1,

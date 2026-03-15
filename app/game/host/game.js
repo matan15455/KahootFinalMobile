@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { getSocket } from '../../../utils/socket';
 import ScoreBoard from '../../../components/ScoreBoard';
 
@@ -58,7 +57,6 @@ export default function HostGame() {
     socket.emit('nextQuestion', { roomId });
   };
 
-  // ── Guards ──────────────────────────────────────────
   if (!room) {
     return (
       <View style={styles.container}>
@@ -68,7 +66,6 @@ export default function HostGame() {
     );
   }
 
-  // ── END ─────────────────────────────────────────────
   if (room.phase === 'END') {
     return (
       <View style={styles.container}>
@@ -81,12 +78,10 @@ export default function HostGame() {
     );
   }
 
-  // ── SUMMARY ─────────────────────────────────────────
   if (room.phase === 'SUMMARY' && room.summary) {
     return (
       <View style={styles.container}>
         <Text style={styles.phaseTitle}>תוצאות השאלה</Text>
-
         <FlatList
           data={Object.entries(room.summary.answersCount)}
           keyExtractor={([ans]) => ans}
@@ -105,7 +100,6 @@ export default function HostGame() {
             );
           }}
         />
-
         <TouchableOpacity style={styles.nextBtn} onPress={handleNext}>
           <Text style={styles.nextBtnText}>הצג ניקוד ▶</Text>
         </TouchableOpacity>
@@ -113,7 +107,6 @@ export default function HostGame() {
     );
   }
 
-  // ── SCORES ──────────────────────────────────────────
   if (room.phase === 'SCORES') {
     return (
       <View style={styles.container}>
@@ -125,7 +118,6 @@ export default function HostGame() {
     );
   }
 
-  // ── QUESTION ─────────────────────────────────────────
   if (room.phase === 'QUESTION' && room.question) {
     const danger = timeLeft !== null && timeLeft <= 5;
     const warning = timeLeft !== null && timeLeft <= 10 && timeLeft > 5;
@@ -134,31 +126,26 @@ export default function HostGame() {
       <View style={styles.container}>
         <Text style={styles.questionIndex}>שאלה {room.questionIndex + 1}</Text>
 
-        {/* Timer */}
         {timeLeft !== null && (
           <View style={[styles.timerWrap, danger && styles.timerDanger, warning && styles.timerWarning]}>
             <Text style={styles.timerText}>{timeLeft}</Text>
           </View>
         )}
 
-        {/* Question */}
         <View style={styles.questionCard}>
           <Text style={styles.questionText}>{room.question.text}</Text>
         </View>
 
-        {/* Answers (display only) */}
-        <FlatList
-          data={room.question.answers}
-          keyExtractor={(_, i) => String(i)}
-          contentContainerStyle={styles.answersList}
-          numColumns={2}
-          scrollEnabled={false}
-          renderItem={({ item, index }) => (
-            <View style={[styles.answerTile, { backgroundColor: tileColor(index) }]}>
-              <Text style={styles.answerTileText}>{item.text}</Text>
+        <View style={styles.answersGrid}>
+          {room.question.answers.map((ans, index) => (
+            <View
+              key={String(index)}
+              style={[styles.answerTile, { backgroundColor: tileColor(index) }]}
+            >
+              <Text style={styles.answerTileText}>{ans.text}</Text>
             </View>
-          )}
-        />
+          ))}
+        </View>
 
         <TouchableOpacity style={styles.nextBtn} onPress={handleNext}>
           <Text style={styles.nextBtnText}>סיים שאלה ▶</Text>
@@ -167,7 +154,6 @@ export default function HostGame() {
     );
   }
 
-  // ── LOBBY fallback ───────────────────────────────────
   return (
     <View style={styles.container}>
       <Text style={styles.loadingText}>⏳ ממתין לתחילת המשחק…</Text>
@@ -186,9 +172,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#070815',
     paddingTop: 60,
     paddingHorizontal: 20,
-    alignItems: 'center',
   },
-  loadingText: { color: 'rgba(234,240,255,0.6)', fontSize: 16, marginTop: 16 },
+  loadingText: {
+    color: 'rgba(234,240,255,0.6)',
+    fontSize: 16,
+    marginTop: 16,
+    textAlign: 'center',
+  },
   phaseTitle: {
     color: '#eaf0ff',
     fontSize: 26,
@@ -196,8 +186,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
   },
-
-  // Timer
   timerWrap: {
     width: 80,
     height: 80,
@@ -208,25 +196,24 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
+    alignSelf: 'center',
   },
   timerWarning: { borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.15)' },
   timerDanger: { borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.15)' },
   timerText: { color: '#eaf0ff', fontSize: 30, fontWeight: '900' },
-
-  // Question
   questionIndex: {
     color: 'rgba(234,240,255,0.5)',
     fontSize: 14,
     fontWeight: '600',
     marginBottom: 10,
     letterSpacing: 1,
+    textAlign: 'center',
   },
   questionCard: {
     backgroundColor: 'rgba(255,255,255,0.07)',
     borderRadius: 20,
     padding: 22,
     marginBottom: 20,
-    width: '100%',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.12)',
   },
@@ -237,12 +224,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 28,
   },
-
-  // Answers grid
-  answersList: { width: '100%', gap: 10, paddingBottom: 10 },
+  answersGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 10,
+  },
   answerTile: {
-    flex: 1,
-    margin: 5,
+    width: '47.5%',
     borderRadius: 16,
     padding: 18,
     alignItems: 'center',
@@ -255,8 +244,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textAlign: 'center',
   },
-
-  // Buttons
   nextBtn: {
     backgroundColor: 'rgba(34,211,238,0.2)',
     borderWidth: 1,
@@ -265,6 +252,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 36,
     paddingVertical: 16,
     marginTop: 16,
+    alignSelf: 'center',
   },
   nextBtnText: { color: '#eaf0ff', fontSize: 17, fontWeight: '800' },
   endBtn: {
@@ -275,11 +263,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 36,
     paddingVertical: 16,
     marginTop: 20,
+    alignSelf: 'center',
   },
   endBtnText: { color: '#eaf0ff', fontSize: 17, fontWeight: '800' },
-
-  // Summary
-  summaryList: { width: '100%', gap: 10, paddingBottom: 10 },
+  summaryList: { gap: 10, paddingBottom: 10 },
   summaryItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
