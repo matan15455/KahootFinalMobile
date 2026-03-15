@@ -2,7 +2,7 @@ import { io } from 'socket.io-client';
 
 let socket = null;
 
-export const SERVER_URL = 'http://YOUR_IP:5000'; // שנה ל-IP שלך
+export const SERVER_URL = '192.168.7.17:5000'; // שנה ל-IP שלך
 
 export function connectSocket(token) {
   if (socket) {
