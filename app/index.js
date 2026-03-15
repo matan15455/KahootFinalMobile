@@ -10,9 +10,9 @@ export default function Index() {
   useEffect(() => {
     if (!loading) {
       if (isAuthenticated) {
-        router.replace('/(game)/home');
+        router.replace('/game/home');
       } else {
-        router.replace('/(auth)/login');
+        router.replace('/auth/login');
       }
     }
   }, [isAuthenticated, loading]);
