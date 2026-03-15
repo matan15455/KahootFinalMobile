@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View, Text, TouchableOpacity, StyleSheet,
   FlatList, ActivityIndicator, Alert,
@@ -14,30 +15,37 @@ export default function CreateRoom() {
 
   const router = useRouter();
   const { quizId, title } = useLocalSearchParams();
-  const roomCreated = useRef(false);
 
-  useEffect(() => {
-    const socket = getSocket();
-    if (!socket) return;
+  useFocusEffect(
+    useCallback(() => {
+      const socket = getSocket();
+      if (!socket) return;
 
-    // listener קודם לפני emit
-    const handleRoomUpdated = (roomData) => {
-      setRoom(roomData);
-      if (roomData.phase === 'QUESTION') {
-        router.replace(`/game/host/game?roomId=${roomData.roomId}`);
+      setRoom(null);
+      setStarting(false);
+
+      const handleRoomUpdated = (roomData) => {
+        setRoom(roomData);
+        if (roomData.phase === 'QUESTION') {
+          router.replace(`/game/host/game?roomId=${roomData.roomId}`);
+        }
+      };
+
+      socket.on('roomUpdated', handleRoomUpdated);
+
+      if (socket.connected) {
+        socket.emit('createRoom', { quizId });
+      } else {
+        socket.once('connect', () => {
+          socket.emit('createRoom', { quizId });
+        });
       }
-    };
 
-    socket.on('roomUpdated', handleRoomUpdated);
-
-    // emit רק פעם אחת
-    if (!roomCreated.current) {
-      roomCreated.current = true;
-      socket.emit('createRoom', { quizId });
-    }
-
-    return () => socket.off('roomUpdated', handleRoomUpdated);
-  }, []);
+      return () => {
+        socket.off('roomUpdated', handleRoomUpdated);
+      };
+    }, [quizId])
+  );
 
   const handleStart = () => {
     const socket = getSocket();
