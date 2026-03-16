@@ -29,8 +29,11 @@ export default function HostGame() {
 
       if (roomData.endsAt) {
         clearInterval(timerRef.current);
+        const offset = Date.now() - roomData.serverTime; // הפרש שעונים
+        const correctedEndsAt = roomData.endsAt + offset; // מתקן
+
         const update = () => {
-          const remaining = Math.max(0, Math.ceil((roomData.endsAt - Date.now()) / 1000));
+          const remaining = Math.max(0, Math.ceil((correctedEndsAt - Date.now()) / 1000));
           setTimeLeft(remaining);
           if (remaining <= 0) clearInterval(timerRef.current);
         };
