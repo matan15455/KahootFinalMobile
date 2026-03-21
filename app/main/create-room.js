@@ -19,6 +19,9 @@ export default function CreateRoom() {
   useFocusEffect(
     useCallback(() => {
       const socket = getSocket();
+
+      console.log("create room socket:"+socket);
+
       if (!socket) return;
 
       setRoom(null);

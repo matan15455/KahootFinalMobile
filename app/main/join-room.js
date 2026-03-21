@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import {
+import { useState, useEffect, useCallback, useRef } from 'react';import {
   View,
   Text,
   TextInput,
@@ -12,6 +11,7 @@ import {
   FlatList,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { getSocket } from '../../utils/socket';
 
@@ -24,22 +24,35 @@ export default function JoinRoom() {
   const router = useRouter();
   const socket = getSocket();
 
+  const roomRef = useRef(null); // שינוי 3: ref לעקוב אחרי room בלי dependency
+
   useEffect(() => {
-    if (!socket) return;
+    roomRef.current = room;
+  }, [room]);
 
-    const handleRoomUpdated = (roomData) => {
-      if (room && roomData.roomId !== room.roomId) return;
+  // שינוי 4: החלפת useEffect ל-useFocusEffect שמנקה כשעוזבים את הטאב
+  useFocusEffect(
+    useCallback(() => {
+      const socket = getSocket();
+      if (!socket) return;
 
-      setRoom(roomData);
+      const handleRoomUpdated = (roomData) => {
+        if (roomRef.current && roomData.roomId !== roomRef.current.roomId) return;
+        setRoom(roomData);
+        if (roomData.phase === 'QUESTION') {
+          router.replace(`/game/player/game?roomId=${roomData.roomId}`);
+        }
+      };
 
-      if (roomData.phase === 'QUESTION') {
-        router.replace(`/game/player/game?roomId=${roomData.roomId}`);
-      }
-    };
+      socket.on('roomUpdated', handleRoomUpdated);
 
-    socket.on('roomUpdated', handleRoomUpdated);
-    return () => socket.off('roomUpdated', handleRoomUpdated);
-  }, [socket, room]);
+      return () => {
+        // שינוי 5: ניקוי listener + איפוס state כשעוזבים את הטאב
+        socket.off('roomUpdated', handleRoomUpdated);
+        setRoom(null);
+      };
+    }, [])
+  );
 
   const handleJoin = () => {
     if (!socket) {

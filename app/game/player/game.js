@@ -1,18 +1,23 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
-  FlatList,
   ActivityIndicator,
   ScrollView,
+  Dimensions,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { getSocket } from '../../../utils/socket';
 import ScoreBoard from '../../../components/ScoreBoard';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 
-const ANSWER_COLORS = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12'];
+const { width } = Dimensions.get('window');
+
+// צבעים בסגנון Kahoot
+const ANSWER_COLORS = ['#e21b3c', '#1368ce', '#d89e00', '#26890c'];
 
 export default function PlayerGame() {
   const [room, setRoom] = useState(null);
@@ -39,8 +44,8 @@ export default function PlayerGame() {
       if (roomData.endsAt) {
         clearInterval(timerRef.current);
 
-        const offset = Date.now() - roomData.serverTime; // הפרש שעונים
-        const correctedEndsAt = roomData.endsAt + offset; // מתקן
+        const offset = Date.now() - roomData.serverTime;
+        const correctedEndsAt = roomData.endsAt + offset;
 
         const update = () => {
           const remaining = Math.max(0, Math.ceil((correctedEndsAt - Date.now()) / 1000));
@@ -73,133 +78,177 @@ export default function PlayerGame() {
     socket.emit('answerQuestion', { roomId, answerText });
   };
 
+  /* =====================================================
+     UI Guards (Loading)
+  ===================================================== */
   if (!room) {
     return (
       <View style={styles.container}>
-        <ActivityIndicator size="large" color="#22d3ee" />
-        <Text style={styles.loadingText}>טוען משחק…</Text>
+        <LinearGradient colors={['#0f172a', '#070815']} style={StyleSheet.absoluteFill} />
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color="#22d3ee" />
+          <Text style={styles.loadingText}>טוען משחק…</Text>
+        </View>
       </View>
     );
   }
 
+  /* =====================================================
+     END
+  ===================================================== */
   if (room.phase === 'END') {
     return (
-      <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.phaseTitle}>🏁 המשחק הסתיים!</Text>
-        <ScoreBoard players={room.players} />
-        <TouchableOpacity style={styles.homeBtn} onPress={() => router.replace('/main/join-room')}>
-          <Text style={styles.homeBtnText}>חזור לדף הבית</Text>
-        </TouchableOpacity>
-      </ScrollView>
+      <View style={styles.container}>
+        <LinearGradient colors={['#0f172a', '#070815']} style={StyleSheet.absoluteFill} />
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          <View style={styles.glassPanel}>
+            <Text style={styles.titleGlow}>🏁 המשחק הסתיים!</Text>
+            <View style={styles.tableWrapper}>
+                <ScoreBoard players={room.players} />
+            </View>
+            <TouchableOpacity style={styles.actionBtn} onPress={() => router.replace('/main/join-room')}>
+              <LinearGradient colors={['#8b5cf6', '#6d28d9']} style={styles.btnGradient}>
+                <Text style={styles.actionBtnText}>חזור לדף הבית</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </View>
     );
   }
 
+  /* =====================================================
+     SUMMARY (תוצאות אישיות)
+  ===================================================== */
   if (room.phase === 'SUMMARY' && room.summary) {
+    const isCorrect = selectedAnswer === room.summary.correctAnswer;
+    const isTimeout = !selectedAnswer;
+
     return (
       <View style={styles.container}>
-        <Text style={styles.phaseTitle}>תוצאות השאלה</Text>
-        <FlatList
-          data={Object.entries(room.summary.answersCount)}
-          keyExtractor={([ans]) => ans}
-          contentContainerStyle={styles.summaryList}
-          renderItem={({ item: [answer, count] }) => {
-            const isCorrect = room.summary.correctAnswer === answer;
-            const isMyWrong = selectedAnswer === answer && !isCorrect;
-            return (
-              <View style={[
-                styles.summaryItem,
-                isCorrect && styles.summaryCorrect,
-                isMyWrong && styles.summaryWrong,
-              ]}>
-                <Text style={[
-                  styles.summaryAnswer,
-                  isCorrect && styles.summaryAnswerCorrect,
-                  isMyWrong && styles.summaryAnswerWrong,
-                ]}>
-                  {answer}
-                </Text>
-                <View style={styles.summaryCountBadge}>
-                  <Text style={styles.summaryCount}>{count}</Text>
-                </View>
-              </View>
-            );
-          }}
-        />
-        <View style={styles.myResultBadge}>
-          {selectedAnswer === room.summary.correctAnswer ? (
-            <Text style={styles.myResultCorrect}>✅ תשובה נכונה!</Text>
-          ) : selectedAnswer ? (
-            <Text style={styles.myResultWrong}>❌ תשובה שגויה</Text>
-          ) : (
-            <Text style={styles.myResultTimeout}>⏱ לא ענית בזמן</Text>
-          )}
+        <LinearGradient colors={['#0f172a', '#070815']} style={StyleSheet.absoluteFill} />
+        <View style={[styles.glassPanel, { flex: 1, marginTop: 40, marginBottom: 20 }]}>
+          
+          <Text style={styles.titleGlow}>תוצאות</Text>
+
+          {/* חיווי מרכזי לשחקן */}
+          <View style={[
+              styles.feedbackCircle, 
+              isCorrect ? styles.feedbackCorrect : isTimeout ? styles.feedbackTimeout : styles.feedbackWrong
+          ]}>
+             <Ionicons 
+                name={isCorrect ? "checkmark-circle" : isTimeout ? "time" : "close-circle"} 
+                size={80} 
+                color="#fff" 
+             />
+             <Text style={styles.feedbackText}>
+                {isCorrect ? 'כל הכבוד!' : isTimeout ? 'זמן עבר!' : 'לא נורא...'}
+             </Text>
+          </View>
+
+          <View style={styles.resultDetails}>
+            <Text style={styles.resultDetailsLabel}>התשובה הנכונה הייתה:</Text>
+            <Text style={styles.resultDetailsCorrectText}>{room.summary.correctAnswer}</Text>
+          </View>
+
+           <Text style={styles.waitingText}>ממתינים למארח...</Text>
         </View>
       </View>
     );
   }
 
+  /* =====================================================
+     SCORES
+  ===================================================== */
   if (room.phase === 'SCORES') {
     return (
-      <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.scrollContent}>
-        <ScoreBoard players={room.players} />
-        <Text style={styles.waitingText}>⏳ ממתינים למארח להמשיך…</Text>
-      </ScrollView>
-    );
-  }
-
-  if (room.phase === 'QUESTION' && room.question) {
-    const danger = timeLeft !== null && timeLeft <= 5;
-    const warning = timeLeft !== null && timeLeft <= 10 && timeLeft > 5;
-
-    return (
       <View style={styles.container}>
-        <Text style={styles.questionIndex}>שאלה {room.questionIndex + 1}</Text>
-
-        {timeLeft !== null && (
-          <View style={[styles.timerWrap, danger && styles.timerDanger, warning && styles.timerWarning]}>
-            <Text style={styles.timerText}>{timeLeft}</Text>
+        <LinearGradient colors={['#0f172a', '#070815']} style={StyleSheet.absoluteFill} />
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          <View style={styles.glassPanel}>
+             <Text style={styles.titleGlow}>טבלת מובילים 🏆</Text>
+             <View style={styles.tableWrapper}>
+                <ScoreBoard players={room.players} />
+             </View>
+             <View style={styles.loadingFooter}>
+                <ActivityIndicator size="small" color="#22d3ee" />
+                <Text style={[styles.waitingText, {marginTop: 0, marginLeft: 10}]}>ממתינים לשאלה הבאה…</Text>
+             </View>
           </View>
-        )}
-
-        <View style={styles.questionCard}>
-          <Text style={styles.questionText}>{room.question.text}</Text>
-        </View>
-
-        {selectedAnswer && (
-          <View style={styles.answeredBadge}>
-            <Text style={styles.answeredText}>✔ ענית: {selectedAnswer}</Text>
-          </View>
-        )}
-
-        <View style={styles.answersGrid}>
-          {room.question.answers.map((ans, index) => {
-            const isSelected = selectedAnswer === ans.text;
-            const isDisabled = !!selectedAnswer;
-            return (
-              <TouchableOpacity
-                key={String(index)}
-                style={[
-                  styles.answerBtn,
-                  { backgroundColor: ANSWER_COLORS[index % ANSWER_COLORS.length] },
-                  isSelected && styles.answerSelected,
-                  isDisabled && !isSelected && styles.answerDimmed,
-                ]}
-                onPress={() => handleAnswer(ans.text)}
-                disabled={isDisabled}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.answerBtnText}>{ans.text}</Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+        </ScrollView>
       </View>
     );
   }
 
+  /* =====================================================
+     QUESTION
+  ===================================================== */
+  if (room.phase === 'QUESTION' && room.question) {
+    const isDanger = timeLeft !== null && timeLeft <= 5;
+    const isWarning = timeLeft !== null && timeLeft <= 10 && timeLeft > 5;
+
+    return (
+      <View style={styles.container}>
+        <LinearGradient colors={['#0f172a', '#070815']} style={StyleSheet.absoluteFill} />
+        
+        <View style={styles.gameHeader}>
+          <View style={styles.questionBadge}>
+            <Text style={styles.questionBadgeText}>שאלה {room.questionIndex + 1}</Text>
+          </View>
+          
+          {timeLeft !== null && (
+            <View style={[
+              styles.megaTimer, 
+              isDanger && styles.timerDanger, 
+              isWarning && styles.timerWarning
+            ]}>
+              <Text style={[
+                styles.timerNumber, 
+                isDanger && { color: '#ef4444' },
+                isWarning && { color: '#f59e0b' }
+              ]}>{timeLeft}</Text>
+            </View>
+          )}
+        </View>
+
+        <View style={styles.questionCard}>
+          <Text style={styles.mainQuestionText}>{room.question.text}</Text>
+        </View>
+
+        {selectedAnswer ? (
+          <View style={styles.waitingForOthersContainer}>
+            <Ionicons name="checkmark-done-circle" size={60} color="#22d3ee" />
+            <Text style={styles.waitingForOthersText}>התשובה נקלטה!</Text>
+            <Text style={styles.waitingSubText}>ממתינים לשאר השחקנים...</Text>
+          </View>
+        ) : (
+          <View style={styles.answersGrid}>
+            {room.question.answers.map((ans, idx) => (
+              <TouchableOpacity 
+                activeOpacity={0.8}
+                key={idx} 
+                style={[styles.answerCard, { backgroundColor: ANSWER_COLORS[idx % ANSWER_COLORS.length] }]}
+                onPress={() => handleAnswer(ans.text)}
+              >
+                <Text style={styles.answerText}>{ans.text}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+      </View>
+    );
+  }
+
+  /* =====================================================
+     LOBBY / FALLBACK
+  ===================================================== */
   return (
     <View style={styles.container}>
-      <Text style={styles.loadingText}>⏳ מחכים שהמארח יתחיל…</Text>
+      <LinearGradient colors={['#0f172a', '#070815']} style={StyleSheet.absoluteFill} />
+      <View style={[styles.glassPanel, styles.centered, {marginHorizontal: 20}]}>
+        <Text style={styles.titleGlow}>⏳ תכף מתחילים...</Text>
+        <Text style={styles.subtitle}>הסתכלו על המסך של המארח</Text>
+      </View>
     </View>
   );
 }
@@ -207,173 +256,238 @@ export default function PlayerGame() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#070e1a',
     paddingTop: 60,
     paddingHorizontal: 20,
-  },
-  scrollContainer: {
-    flex: 1,
-    backgroundColor: '#070e1a',
+    justifyContent: 'center',
   },
   scrollContent: {
-    paddingTop: 60,
-    paddingHorizontal: 20,
+    flexGrow: 1,
+    justifyContent: 'center',
     paddingBottom: 40,
+  },
+  centered: {
     alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 250,
+  },
+  glassPanel: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 24,
+    padding: 24,
+    alignItems: 'center',
+    width: '100%',
+  },
+  titleGlow: {
+    color: '#fff',
+    fontSize: 28,
+    fontWeight: '900',
+    textAlign: 'center',
+    marginBottom: 20,
+    textShadowColor: 'rgba(34,211,238,0.5)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
+  },
+  subtitle: {
+    color: 'rgba(234,240,255,0.7)',
+    fontSize: 16,
+    marginTop: 10,
   },
   loadingText: {
     color: 'rgba(234,240,255,0.6)',
-    fontSize: 16,
+    fontSize: 18,
     marginTop: 16,
-    textAlign: 'center',
   },
-  phaseTitle: {
-    color: '#eaf0ff',
-    fontSize: 26,
-    fontWeight: '900',
+  tableWrapper: {
+    width: '100%',
     marginBottom: 20,
+    minHeight: 150,
+  },
+  actionBtn: {
+    width: '80%',
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginTop: 10,
+  },
+  btnGradient: {
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  actionBtnText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  /* --- Feedback UI (SUMMARY) --- */
+  feedbackCircle: {
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 30,
+    elevation: 10,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 15,
+  },
+  feedbackCorrect: {
+    backgroundColor: '#34d399',
+    shadowColor: '#34d399',
+  },
+  feedbackWrong: {
+    backgroundColor: '#f87171',
+    shadowColor: '#f87171',
+  },
+  feedbackTimeout: {
+    backgroundColor: '#94a3b8',
+    shadowColor: '#94a3b8',
+  },
+  feedbackText: {
+    color: '#fff',
+    fontSize: 22,
+    fontWeight: '900',
+    marginTop: 10,
+  },
+  resultDetails: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    padding: 20,
+    borderRadius: 16,
+    width: '100%',
+    alignItems: 'center',
+  },
+  resultDetailsLabel: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 14,
+    marginBottom: 8,
+  },
+  resultDetailsCorrectText: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: '800',
     textAlign: 'center',
   },
-  timerWrap: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(34,211,238,0.15)',
-    borderWidth: 3,
+  loadingFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  waitingText: {
+    color: 'rgba(234,240,255,0.5)',
+    fontSize: 16,
+    marginTop: 20,
+  },
+  /* --- Question & Timer Styles --- */
+  gameHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    width: '100%',
+  },
+  questionBadge: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  questionBadgeText: {
+    color: '#eaf0ff',
+    fontWeight: '700',
+  },
+  megaTimer: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    borderWidth: 4,
     borderColor: '#22d3ee',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
-    alignSelf: 'center',
+    backgroundColor: 'rgba(34,211,238,0.1)',
+    shadowColor: '#22d3ee',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 5,
   },
-  timerWarning: { borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.15)' },
-  timerDanger: { borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.15)' },
-  timerText: { color: '#eaf0ff', fontSize: 30, fontWeight: '900' },
-  questionIndex: {
-    color: 'rgba(234,240,255,0.5)',
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 8,
-    letterSpacing: 1,
-    textAlign: 'center',
+  timerWarning: {
+    borderColor: '#f59e0b',
+    backgroundColor: 'rgba(245,158,11,0.1)',
+    shadowColor: '#f59e0b',
+  },
+  timerDanger: {
+    borderColor: '#ef4444',
+    backgroundColor: 'rgba(239,68,68,0.1)',
+    shadowColor: '#ef4444',
+  },
+  timerNumber: {
+    color: '#fff',
+    fontSize: 28,
+    fontWeight: '900',
   },
   questionCard: {
-    backgroundColor: 'rgba(255,255,255,0.07)',
-    borderRadius: 20,
+    backgroundColor: '#fff',
+    borderRadius: 16,
     padding: 20,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
+    marginBottom: 20,
+    alignItems: 'center',
+    elevation: 4,
+    minHeight: 100,
+    justifyContent: 'center',
   },
-  questionText: {
-    color: '#eaf0ff',
-    fontSize: 18,
-    fontWeight: '700',
+  mainQuestionText: {
+    color: '#333',
+    fontSize: 20,
+    fontWeight: '800',
     textAlign: 'center',
-    lineHeight: 26,
-  },
-  answeredBadge: {
-    backgroundColor: 'rgba(34,211,238,0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(34,211,238,0.3)',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginBottom: 12,
-    alignSelf: 'center',
-  },
-  answeredText: {
-    color: '#22d3ee',
-    fontSize: 13,
-    fontWeight: '700',
-    textAlign: 'center',
+    lineHeight: 28,
   },
   answersGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    justifyContent: 'space-between',
   },
-  answerBtn: {
-    width: '47.5%',
-    borderRadius: 18,
-    padding: 20,
-    alignItems: 'center',
+  answerCard: {
+    width: '48%',
+    minHeight: 120,
+    borderRadius: 16,
+    padding: 16,
     justifyContent: 'center',
-    minHeight: 80,
+    alignItems: 'center',
+    marginBottom: 16,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
   },
-  answerSelected: {
-    borderWidth: 3,
-    borderColor: '#fff',
-  },
-  answerDimmed: {
-    opacity: 0.4,
-  },
-  answerBtnText: {
+  answerText: {
     color: '#fff',
-    fontSize: 15,
+    fontSize: 18,
     fontWeight: '800',
     textAlign: 'center',
   },
-  summaryList: { gap: 10, paddingBottom: 10 },
-  summaryItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  summaryCorrect: {
-    backgroundColor: 'rgba(52,211,153,0.15)',
-    borderColor: 'rgba(52,211,153,0.4)',
-  },
-  summaryWrong: {
-    backgroundColor: 'rgba(239,68,68,0.1)',
-    borderColor: 'rgba(239,68,68,0.3)',
-  },
-  summaryAnswer: {
-    color: '#eaf0ff',
-    fontSize: 15,
-    fontWeight: '600',
+  waitingForOthersContainer: {
     flex: 1,
-    textAlign: 'right',
-  },
-  summaryAnswerCorrect: { color: '#34d399', fontWeight: '800' },
-  summaryAnswerWrong: { color: '#f87171' },
-  summaryCountBadge: {
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    marginRight: 10,
-  },
-  summaryCount: { color: '#eaf0ff', fontSize: 15, fontWeight: '800' },
-  myResultBadge: {
-    marginTop: 16,
-    padding: 14,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    justifyContent: 'center',
     alignItems: 'center',
-  },
-  myResultCorrect: { color: '#34d399', fontSize: 18, fontWeight: '900' },
-  myResultWrong: { color: '#f87171', fontSize: 18, fontWeight: '900' },
-  myResultTimeout: { color: 'rgba(234,240,255,0.5)', fontSize: 18, fontWeight: '700' },
-  waitingText: {
-    color: 'rgba(234,240,255,0.5)',
-    fontSize: 15,
-    marginTop: 20,
-    textAlign: 'center',
-  },
-  homeBtn: {
-    backgroundColor: 'rgba(124,58,237,0.25)',
+    backgroundColor: 'rgba(34,211,238,0.05)',
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(124,58,237,0.4)',
-    borderRadius: 18,
-    paddingHorizontal: 36,
-    paddingVertical: 16,
-    marginTop: 24,
+    borderColor: 'rgba(34,211,238,0.2)',
+    marginTop: 20,
+    maxHeight: 250,
   },
-  homeBtnText: { color: '#eaf0ff', fontSize: 17, fontWeight: '800' },
+  waitingForOthersText: {
+    color: '#22d3ee',
+    fontSize: 24,
+    fontWeight: '900',
+    marginTop: 10,
+  },
+  waitingSubText: {
+    color: 'rgba(234,240,255,0.6)',
+    fontSize: 16,
+    marginTop: 8,
+  }
 });
