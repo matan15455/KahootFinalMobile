@@ -30,13 +30,11 @@ export default function CreateAI() {
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // תוצאה מה-AI
   const [generatedQuiz, setGeneratedQuiz] = useState(null);
 
   const { token } = useAuth();
   const router = useRouter();
 
-  // ─── יצירה עם AI ────────────────────────────────────────
   const handleGenerate = async () => {
     if (!topic.trim()) {
       Alert.alert('שגיאה', 'אנא הכנס נושא לשאלון');
@@ -52,7 +50,6 @@ export default function CreateAI() {
         numQuestions,
       });
 
-      // המרת פורמט AI לפורמט השרת שלנו
       const questions = res.data.questions.map((q) => ({
         text: q.text,
         type: 'multiple-choice',
@@ -77,7 +74,6 @@ export default function CreateAI() {
     }
   };
 
-  // ─── שמירה לשרת ─────────────────────────────────────────
   const handleSave = async () => {
     try {
       setSaving(true);
@@ -99,7 +95,6 @@ export default function CreateAI() {
   return (
     <View style={styles.container}>
 
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="#eaf0ff" />
@@ -110,7 +105,7 @@ export default function CreateAI() {
 
       <ScrollView contentContainerStyle={styles.scroll}>
 
-        {/* ── טופס הגדרות ── */}
+        {/*  טופס הגדרות  */}
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>הגדרות השאלון</Text>
 
@@ -174,7 +169,7 @@ export default function CreateAI() {
           </TouchableOpacity>
         </View>
 
-        {/* ── תצוגת תוצאה ── */}
+        {/*  תצוגת תוצאה  */}
         {generatedQuiz && (
           <View style={styles.resultCard}>
 
