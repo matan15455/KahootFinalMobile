@@ -1,125 +1,249 @@
+// ===================================================================
+// app/main/create-quiz.js — EduPlay design (Quiz Creation Mode)
+// תואם ל-QuizCreationMode.jsx של האתר
+// 2 כרטיסים: ידני (paper + hex violet) / AI (ink + burst coral + lime CTA)
+// ===================================================================
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
+  View, Text, TouchableOpacity, ScrollView, StyleSheet,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { colors, fonts, radii } from '../../constants/theme';
+import { EpShape } from '../../components/EpBrand';
 
 export default function CreateQuiz() {
   const router = useRouter();
 
   return (
-    <View style={styles.container}>
-
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#eaf0ff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>צור שאלון</Text>
-        <View style={{ width: 24 }} />
+    <ScrollView
+      style={cqStyles.container}
+      contentContainerStyle={cqStyles.scroll}
+      showsVerticalScrollIndicator={false}
+    >
+      {/* ── Header ── */}
+      <View style={{ alignItems: 'center', marginBottom: 30 }}>
+        <Text style={cqStyles.kicker}>יצירת חידון</Text>
+        <Text style={cqStyles.title}>איך נתחיל?</Text>
+        <Text style={cqStyles.sub}>
+          בחרו את הדרך שמתאימה לכם — אפשר להתחיל ידני,{'\n'}
+          או לתת ל-AI להציע לכם שאלות לנושא שאתם בוחרים.
+        </Text>
       </View>
 
-      <View style={styles.content}>
-        <Text style={styles.subtitle}>בחר איך תרצה ליצור את השאלון</Text>
+      {/* ── Manual Card ── */}
+      <TouchableOpacity
+        style={cqStyles.cardManual}
+        activeOpacity={0.85}
+        onPress={() => router.push('/main/create-manual')}
+      >
+        <View style={cqStyles.art}>
+          <View style={[cqStyles.shadowBlur, { backgroundColor: colors.ans2 }]}/>
+          <EpShape kind="hex" size={56} color={colors.ans2}/>
+        </View>
 
-        <TouchableOpacity
-          style={styles.card}
-          onPress={() => router.push('/main/create-manual')}
-        >
-          <View style={styles.iconWrap}>
-            <Ionicons name="create-outline" size={36} color="#22d3ee" />
-          </View>
-          <View style={styles.cardText}>
-            <Text style={styles.cardTitle}>יצירה ידנית</Text>
-            <Text style={styles.cardDesc}>הוסף שאלות ותשובות בעצמך</Text>
-          </View>
-          <Ionicons name="chevron-back" size={20} color="rgba(234,240,255,0.4)" />
-        </TouchableOpacity>
+        <View style={{ gap: 12 }}>
+          <Text style={cqStyles.cardTitle}>יצירה ידנית</Text>
+          <Text style={cqStyles.cardDesc}>
+            בנו את החידון שלכם שאלה-שאלה. שליטה מלאה בטקסט,{'\n'}
+            בתשובות, בזמן ובניקוד של כל שאלה.
+          </Text>
 
-        <TouchableOpacity
-          style={styles.card}
-          onPress={() => router.push('/main/create-ai')}
-        >
-          <View style={[styles.iconWrap, styles.iconAI]}>
-            <Ionicons name="sparkles-outline" size={36} color="#a78bfa" />
+          <View style={{ gap: 6, marginTop: 6 }}>
+            <Bullet text="שליטה מלאה" dark={false}/>
+            <Bullet text="ללא הגבלת אורך" dark={false}/>
+            <Bullet text="עריכה חופשית" dark={false}/>
           </View>
-          <View style={styles.cardText}>
-            <Text style={styles.cardTitle}>יצירה עם AI ✨</Text>
-            <Text style={styles.cardDesc}>תאר נושא וה-AI יצור שאלות אוטומטית</Text>
+        </View>
+
+        <View style={cqStyles.cardBtnGhost}>
+          <Text style={cqStyles.cardBtnGhostText}>התחילו ידנית</Text>
+          <Text style={cqStyles.arrow}>←</Text>
+        </View>
+      </TouchableOpacity>
+
+      {/* ── AI Card ── */}
+      <TouchableOpacity
+        style={cqStyles.cardAI}
+        activeOpacity={0.9}
+        onPress={() => router.push('/main/create-ai')}
+      >
+        {/* Tag "חדש · AI" */}
+        <View style={cqStyles.tag}>
+          <Text style={cqStyles.tagText}>חדש · AI</Text>
+        </View>
+
+        <View style={cqStyles.art}>
+          <View style={[cqStyles.shadowBlur, { backgroundColor: colors.ans1, opacity: 0.18 }]}/>
+          <EpShape kind="burst" size={56} color={colors.ans1}/>
+        </View>
+
+        <View style={{ gap: 12 }}>
+          <Text style={[cqStyles.cardTitle, { color: colors.paper }]}>יצירה עם AI</Text>
+          <Text style={[cqStyles.cardDesc, { color: 'rgba(251,248,241,0.7)' }]}>
+            בחרו נושא ורמת קושי — בינה מלאכותית תייצר טיוטה{'\n'}
+            של חידון שלם, ואתם תערכו וישפרו לפני השמירה.
+          </Text>
+
+          <View style={{ gap: 6, marginTop: 6 }}>
+            <Bullet text="חיסכון משמעותי בזמן" dark/>
+            <Bullet text="ניסוח מקצועי" dark/>
+            <Bullet text="ניתן לערוך הכול" dark/>
           </View>
-          <Ionicons name="chevron-back" size={20} color="rgba(234,240,255,0.4)" />
-        </TouchableOpacity>
+        </View>
+
+        <View style={cqStyles.cardBtnLime}>
+          <Text style={cqStyles.cardBtnLimeText}>צרו עם AI</Text>
+          <Text style={[cqStyles.arrow, { color: colors.ink }]}>←</Text>
+        </View>
+      </TouchableOpacity>
+
+      {/* ── Foot ── */}
+      <Text style={cqStyles.foot}>
+        תוכלו לשנות הכל אחר כך — שתי הדרכים מובילות לאותו עורך.
+      </Text>
+    </ScrollView>
+  );
+}
+
+/* ── Bullet helper ────────────────────────────────────── */
+function Bullet({ text, dark }) {
+  return (
+    <View style={{ flexDirection: 'row-reverse', alignItems: 'center', gap: 10 }}>
+      <View style={[
+        cqStyles.check,
+        dark && { backgroundColor: 'rgba(184,225,66,0.22)' },
+      ]}>
+        <Text style={[
+          cqStyles.checkText,
+          dark && { color: colors.ans3 },
+        ]}>✓</Text>
       </View>
-
+      <Text style={[
+        cqStyles.bulletText,
+        dark && { color: 'rgba(251,248,241,0.8)' },
+      ]}>{text}</Text>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#070815',
+const cqStyles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.cream },
+  scroll: {
+    paddingHorizontal: 22,
+    paddingTop: 60, paddingBottom: 120,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 20,
+
+  // ── Header ──
+  kicker: {
+    fontFamily: fonts.num, fontSize: 11, fontWeight: '600',
+    letterSpacing: 1.2, textTransform: 'uppercase',
+    color: colors.inkMute, marginBottom: 8,
   },
-  headerTitle: {
-    color: '#eaf0ff',
-    fontSize: 20,
-    fontWeight: '800',
+  title: {
+    fontFamily: fonts.display, fontWeight: '800',
+    fontSize: 44, letterSpacing: -1, lineHeight: 46,
+    color: colors.ink, marginBottom: 10, textAlign: 'center',
   },
-  content: {
-    flex: 1,
-    padding: 24,
-    gap: 16,
+  sub: {
+    fontFamily: fonts.body, fontSize: 14, lineHeight: 22,
+    color: colors.ink3, textAlign: 'center', maxWidth: 340,
   },
-  subtitle: {
-    color: 'rgba(234,240,255,0.55)',
-    fontSize: 14,
-    textAlign: 'right',
-    marginBottom: 8,
+
+  // ── Card (shared) ──
+  cardManual: {
+    backgroundColor: colors.paper,
+    borderWidth: 1, borderColor: 'rgba(20,18,26,0.06)',
+    borderRadius: radii.xl,
+    padding: 26,
+    marginBottom: 16,
+    gap: 18,
+    overflow: 'hidden',
   },
-  card: {
-    backgroundColor: 'rgba(255,255,255,0.07)',
-    borderRadius: 22,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
+  cardAI: {
+    backgroundColor: colors.ink,
+    borderWidth: 1, borderColor: colors.ink,
+    borderRadius: radii.xl,
+    padding: 26,
+    marginBottom: 16,
+    gap: 18,
+    overflow: 'hidden',
+    position: 'relative',
   },
-  iconWrap: {
-    width: 60,
-    height: 60,
-    borderRadius: 16,
-    backgroundColor: 'rgba(34,211,238,0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
+
+  tag: {
+    position: 'absolute',
+    top: 16, right: 18, zIndex: 2,
+    paddingHorizontal: 12, paddingVertical: 5,
+    backgroundColor: colors.paper,
+    borderRadius: radii.pill,
   },
-  iconAI: {
-    backgroundColor: 'rgba(167,139,250,0.1)',
+  tagText: {
+    fontFamily: fonts.num, fontSize: 10, fontWeight: '700',
+    letterSpacing: 0.6, color: colors.ink,
   },
-  cardText: {
-    flex: 1,
-    alignItems: 'flex-end',
+
+  // Art zone (glyph + blur shadow)
+  art: {
+    height: 80, alignItems: 'center', justifyContent: 'center',
+    position: 'relative',
   },
+  shadowBlur: {
+    position: 'absolute',
+    width: 110, height: 110, borderRadius: 55,
+    opacity: 0.12,
+  },
+
   cardTitle: {
-    color: '#eaf0ff',
-    fontSize: 17,
-    fontWeight: '800',
-    marginBottom: 4,
+    fontFamily: fonts.display, fontWeight: '800',
+    fontSize: 26, letterSpacing: -0.6, color: colors.ink,
+    textAlign: 'right',
   },
   cardDesc: {
-    color: 'rgba(234,240,255,0.5)',
-    fontSize: 13,
-    textAlign: 'right',
+    fontFamily: fonts.body, fontSize: 13.5, lineHeight: 21,
+    color: colors.ink3, textAlign: 'right',
+  },
+
+  // Bullet
+  check: {
+    width: 18, height: 18, borderRadius: 9,
+    backgroundColor: 'rgba(30,158,95,0.12)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  checkText: { color: colors.ok, fontWeight: '900', fontSize: 11 },
+  bulletText: {
+    fontFamily: fonts.body, fontSize: 13, fontWeight: '500',
+    color: colors.ink3,
+  },
+
+  // CTAs
+  cardBtnGhost: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 13, paddingHorizontal: 20,
+    borderWidth: 1, borderColor: 'rgba(20,18,26,0.12)',
+    borderRadius: radii.pill,
+  },
+  cardBtnGhostText: {
+    fontFamily: fonts.display, fontWeight: '700',
+    fontSize: 15, color: colors.ink,
+  },
+  cardBtnLime: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 13, paddingHorizontal: 20,
+    backgroundColor: colors.ans3,
+    borderRadius: radii.pill,
+  },
+  cardBtnLimeText: {
+    fontFamily: fonts.display, fontWeight: '700',
+    fontSize: 15, color: colors.ink,
+  },
+  arrow: { fontSize: 18, color: colors.ink, fontWeight: '700' },
+
+  // Foot
+  foot: {
+    fontFamily: fonts.body, fontSize: 13,
+    color: colors.inkMute, textAlign: 'center', marginTop: 8,
   },
 });

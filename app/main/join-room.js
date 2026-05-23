@@ -1,362 +1,414 @@
-import { useState, useEffect, useCallback, useRef } from 'react';import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  FlatList,
+// ===================================================================
+// app/main/join-room.js — EduPlay design
+// תואם ל-JoinScreen.jsx של האתר
+// 2 מצבים: טופס הצטרפות + לובי המתנה (אחרי join)
+// ===================================================================
+import { useState, useEffect, useCallback, useRef } from 'react';
+import {
+  View, Text, TextInput, TouchableOpacity, FlatList,
+  KeyboardAvoidingView, Platform, ScrollView, StyleSheet,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
 import { getSocket } from '../../utils/socket';
+import { colors, fonts, radii } from '../../constants/theme';
+import { EpShape } from '../../components/EpBrand';
 
 export default function JoinRoom() {
   const [nickname, setNickname] = useState('');
-  const [roomId, setRoomId] = useState('');
-  const [joining, setJoining] = useState(false);
-  const [room, setRoom] = useState(null);
+  const [roomId, setRoomId]     = useState('');
+  const [error, setError]       = useState('');
+  const [joining, setJoining]   = useState(false);
+  const [room, setRoom]         = useState(null);
 
   const router = useRouter();
-  const socket = getSocket();
+  const roomRef = useRef(null);
+  useEffect(() => { roomRef.current = room; }, [room]);
 
-  const roomRef = useRef(null); // שינוי 3: ref לעקוב אחרי room בלי dependency
+  useFocusEffect(useCallback(() => {
+    const socket = getSocket();
+    if (!socket) return;
 
-  useEffect(() => {
-    roomRef.current = room;
-  }, [room]);
+    const handleRoomUpdated = (data) => {
+      if (roomRef.current && data.roomId !== roomRef.current.roomId) return;
+      setRoom(data);
+      if (data.phase === 'QUESTION') {
+        router.replace(`/game/player/game?roomId=${data.roomId}`);
+      }
+    };
+    socket.on('roomUpdated', handleRoomUpdated);
 
-  // שינוי 4: החלפת useEffect ל-useFocusEffect שמנקה כשעוזבים את הטאב
-  useFocusEffect(
-    useCallback(() => {
-      const socket = getSocket();
-      if (!socket) return;
-
-      const handleRoomUpdated = (roomData) => {
-        if (roomRef.current && roomData.roomId !== roomRef.current.roomId) return;
-        setRoom(roomData);
-        if (roomData.phase === 'QUESTION') {
-          router.replace(`/game/player/game?roomId=${roomData.roomId}`);
-        }
-      };
-
-      socket.on('roomUpdated', handleRoomUpdated);
-
-      return () => {
-        // שינוי 5: ניקוי listener + איפוס state כשעוזבים את הטאב
-        socket.off('roomUpdated', handleRoomUpdated);
-        setRoom(null);
-      };
-    }, [])
-  );
+    return () => {
+      socket.off('roomUpdated', handleRoomUpdated);
+      setRoom(null);
+    };
+  }, []));
 
   const handleJoin = () => {
-    if (!socket) {
-      Alert.alert('שגיאה', 'אין חיבור לשרת');
-      return;
-    }
+    const socket = getSocket();
+    if (!socket) return setError('אין חיבור לשרת');
     if (!nickname.trim() || !roomId.trim()) {
-      Alert.alert('שגיאה', 'אנא מלא שם כינוי וקוד חדר');
-      return;
+      return setError('אנא מלאו שם וקוד חדר');
     }
-
+    setError('');
     setJoining(true);
-
     socket.emit('joinRoom', { roomId: roomId.trim(), nickname: nickname.trim() }, (res) => {
       setJoining(false);
-      if (!res.ok) {
-        Alert.alert('שגיאה', res.message);
-      }
-      // on success → roomUpdated will fire and set room
+      if (!res.ok) setError(res.message);
     });
   };
 
-  // ── מסך המתנה לאחר הצטרפות ──────────────────────────
+  // ═══ Lobby (אחרי join) ═══════════════════════════════════
   if (room) {
     return (
-      <View style={styles.container}>
-        <View style={styles.waitingCard}>
-          <View style={styles.waitingHeader}>
-            <Text style={styles.waitingTitle}>🎮 {room.roomId}</Text>
-            <Text style={styles.waitingSubtitle}>ממתין שהמארח יתחיל…</Text>
+      <View style={joinStyles.container}>
+        <ScrollView contentContainerStyle={joinStyles.lobby} showsVerticalScrollIndicator={false}>
+
+          {/* "אתה" — dark hero */}
+          <View style={joinStyles.you}>
+            <View style={joinStyles.youBlob}/>
+            <Text style={joinStyles.youLabel}>השם שלך בחדר</Text>
+            <Text style={joinStyles.youName}>{nickname}</Text>
+            <View style={joinStyles.youStatus}>
+              <View style={joinStyles.pulseDot}/>
+              <Text style={joinStyles.youStatusText}>
+                ממתינים שהמנחה יתחיל את החידון
+              </Text>
+            </View>
           </View>
 
-          <View style={styles.playersMeta}>
-            <Ionicons name="people-outline" size={16} color="#22d3ee" />
-            <Text style={styles.playersCount}>{room.players.length} שחקנים בחדר</Text>
-          </View>
+          {/* Roster */}
+          <View style={joinStyles.roster}>
+            <View style={joinStyles.rosterHead}>
+              <Text style={joinStyles.rosterTitle}>בחדר עכשיו</Text>
+              <Text style={joinStyles.rosterCount}>
+                {room.players.length} שחקנים
+              </Text>
+            </View>
 
-          <FlatList
-            data={room.players}
-            keyExtractor={(p) => p.socketId || p.userId}
-            contentContainerStyle={styles.playersList}
-            renderItem={({ item, index }) => (
-              <View style={[styles.playerItem, { animationDelay: `${index * 0.06}s` }]}>
-                <View style={styles.playerAvatar}>
-                  <Text style={styles.playerAvatarText}>
-                    {item.nickname.charAt(0).toUpperCase()}
-                  </Text>
-                </View>
-                <Text style={styles.playerName}>{item.nickname}</Text>
-                {item.nickname === nickname && (
-                  <View style={styles.youBadge}>
-                    <Text style={styles.youBadgeText}>אתה</Text>
+            <FlatList
+              data={room.players}
+              keyExtractor={(p) => p.socketId || p.userId}
+              numColumns={3}
+              columnWrapperStyle={{ gap: 8 }}
+              ItemSeparatorComponent={() => <View style={{ height: 8 }}/>}
+              scrollEnabled={false}
+              renderItem={({ item }) => {
+                const isYou = item.nickname === nickname;
+                return (
+                  <View style={[
+                    joinStyles.player,
+                    isYou && joinStyles.playerYou,
+                  ]}>
+                    <View style={[
+                      joinStyles.avatar,
+                      isYou && { backgroundColor: colors.primary },
+                    ]}>
+                      <Text style={[
+                        joinStyles.avatarText,
+                        isYou && { color: '#fff' },
+                      ]}>
+                        {item.nickname.charAt(0).toUpperCase()}
+                      </Text>
+                    </View>
+                    <Text style={joinStyles.playerName} numberOfLines={1}>
+                      {item.nickname}
+                    </Text>
+                    {isYou && (
+                      <View style={joinStyles.youTag}>
+                        <Text style={joinStyles.youTagText}>אתה</Text>
+                      </View>
+                    )}
                   </View>
-                )}
-              </View>
-            )}
-          />
-
-          <View style={styles.pulseDot}>
-            <View style={styles.dot} />
-            <Text style={styles.pulseText}>מחכים למארח</Text>
+                );
+              }}
+            />
           </View>
-        </View>
+        </ScrollView>
       </View>
     );
   }
 
-  // ── טופס הצטרפות ────────────────────────────────────
+  // ═══ Join form ═══════════════════════════════════════════
   return (
     <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      style={joinStyles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#eaf0ff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>הצטרף לחדר</Text>
-        <View style={{ width: 24 }} />
-      </View>
-
-      <View style={styles.formCard}>
-        <View style={styles.iconWrap}>
-          <Ionicons name="game-controller-outline" size={48} color="#22d3ee" />
-        </View>
-
-        <Text style={styles.formTitle}>הכנס פרטים</Text>
-        <Text style={styles.formSubtitle}>ציין שם כינוי וקוד חדר כדי להצטרף</Text>
-
-        <TextInput
-          style={styles.input}
-          placeholder="כינוי"
-          placeholderTextColor="rgba(234,240,255,0.4)"
-          value={nickname}
-          onChangeText={setNickname}
-          textAlign="right"
-          maxLength={20}
-          autoCorrect={false}
-        />
-
-        <TextInput
-          style={styles.input}
-          placeholder="קוד חדר"
-          placeholderTextColor="rgba(234,240,255,0.4)"
-          value={roomId}
-          onChangeText={setRoomId}
-          textAlign="right"
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-
-        <TouchableOpacity
-          style={[styles.joinBtn, joining && styles.btnDisabled]}
-          onPress={handleJoin}
-          disabled={joining}
-        >
-          {joining ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <View style={styles.btnRow}>
-              <Ionicons name="enter-outline" size={20} color="#eaf0ff" />
-              <Text style={styles.joinBtnText}>הצטרף</Text>
+      <ScrollView
+        contentContainerStyle={joinStyles.scroll}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={joinStyles.formCard}>
+          {/* Hero */}
+          <View>
+            <View style={joinStyles.kicker}>
+              <EpShape kind="hex" size={14} color={colors.ans2}/>
+              <Text style={joinStyles.kickerText}>הצטרפות לחדר</Text>
             </View>
-          )}
-        </TouchableOpacity>
-      </View>
+            <Text style={joinStyles.title}>
+              מצטרפים{'\n'}
+              <Text style={{ color: colors.primary }}>למשחק.</Text>
+            </Text>
+            <Text style={joinStyles.sub}>
+              הזינו את קוד החדר שקיבלתם מהמנחה ובחרו לעצמכם שם.
+            </Text>
+          </View>
+
+          {/* Fields */}
+          <View style={{ gap: 14, marginTop: 24 }}>
+            {/* PIN input — LTR מרכזי */}
+            <View>
+              <Text style={joinStyles.label}>קוד חדר</Text>
+              <TextInput
+                style={joinStyles.pin}
+                placeholder="000000"
+                placeholderTextColor="rgba(20,18,26,0.18)"
+                value={roomId}
+                onChangeText={setRoomId}
+                keyboardType="numeric"
+                inputMode="numeric"
+                maxLength={6}
+                autoFocus
+              />
+            </View>
+
+            <View>
+              <Text style={joinStyles.label}>השם שלך</Text>
+              <TextInput
+                style={joinStyles.input}
+                placeholder="לדוגמה: יעל"
+                placeholderTextColor={colors.inkMute}
+                textAlign="right"
+                value={nickname}
+                onChangeText={setNickname}
+                maxLength={20}
+                autoCorrect={false}
+              />
+            </View>
+
+            {error ? (
+              <View style={joinStyles.errorBox}>
+                <View style={joinStyles.errorIcon}>
+                  <Text style={{ color: '#fff', fontWeight: '900', fontSize: 12 }}>!</Text>
+                </View>
+                <Text style={joinStyles.errorText}>{error}</Text>
+              </View>
+            ) : null}
+          </View>
+
+          {/* Submit */}
+          <TouchableOpacity
+            style={joinStyles.submit}
+            activeOpacity={0.85}
+            onPress={handleJoin}
+            disabled={joining}
+          >
+            <Text style={joinStyles.submitText}>
+              {joining ? 'מצטרף…' : 'להצטרפות למשחק'}
+            </Text>
+            <Text style={joinStyles.submitArrow}>←</Text>
+          </TouchableOpacity>
+
+          <Text style={joinStyles.footer}>
+            אין לך חשבון? <Text style={{ color: colors.ink, fontWeight: '700' }}>לא צריך</Text> —
+            המנחה יוצר את החדר, אתם רק מצטרפים.
+          </Text>
+        </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#070815',
+const joinStyles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.cream },
+  scroll: {
+    flexGrow: 1, justifyContent: 'center',
+    paddingHorizontal: 20, paddingTop: 60, paddingBottom: 120,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 20,
-  },
-  headerTitle: {
-    color: '#eaf0ff',
-    fontSize: 20,
-    fontWeight: '800',
-  },
+
+  // ── Form Card ──
   formCard: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 28,
-    paddingBottom: 60,
+    backgroundColor: colors.paper,
+    borderWidth: 1, borderColor: 'rgba(20,18,26,0.06)',
+    borderRadius: radii.xl,
+    padding: 28,
+    shadowColor: colors.ink,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.06,
+    shadowRadius: 32,
+    elevation: 6,
   },
-  iconWrap: {
-    alignSelf: 'center',
-    width: 90,
-    height: 90,
-    borderRadius: 24,
-    backgroundColor: 'rgba(34,211,238,0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(34,211,238,0.25)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 24,
+
+  kicker: {
+    flexDirection: 'row-reverse', alignItems: 'center', gap: 8,
+    marginBottom: 12,
   },
-  formTitle: {
-    color: '#eaf0ff',
-    fontSize: 26,
-    fontWeight: '900',
-    textAlign: 'center',
-    marginBottom: 8,
+  kickerText: {
+    fontFamily: fonts.num, fontSize: 12, fontWeight: '600',
+    letterSpacing: 1.2, textTransform: 'uppercase',
+    color: colors.inkMute,
   },
-  formSubtitle: {
-    color: 'rgba(234,240,255,0.55)',
-    fontSize: 14,
-    textAlign: 'center',
-    marginBottom: 32,
+  title: {
+    fontFamily: fonts.display, fontWeight: '800',
+    fontSize: 40, lineHeight: 42, letterSpacing: -0.9,
+    color: colors.ink, textAlign: 'right',
+  },
+  sub: {
+    fontFamily: fonts.body, fontSize: 14, lineHeight: 22,
+    color: colors.ink3, marginTop: 10, textAlign: 'right',
+  },
+
+  // ── Fields ──
+  label: {
+    fontFamily: fonts.body, fontSize: 13, fontWeight: '600',
+    color: colors.ink3, marginBottom: 8, textAlign: 'right',
   },
   input: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.14)',
-    borderRadius: 18,
-    padding: 18,
-    color: '#eaf0ff',
-    fontSize: 16,
-    marginBottom: 16,
+    backgroundColor: colors.cream,
+    borderWidth: 2, borderColor: colors.blackAlpha08,
+    borderRadius: radii.md,
+    paddingHorizontal: 16, paddingVertical: 14,
+    fontFamily: fonts.body, fontSize: 16, fontWeight: '500',
+    color: colors.ink,
   },
-  joinBtn: {
-    backgroundColor: 'rgba(34,211,238,0.2)',
-    borderWidth: 1,
-    borderColor: 'rgba(34,211,238,0.35)',
-    borderRadius: 18,
-    padding: 18,
-    alignItems: 'center',
-    marginTop: 8,
+  pin: {
+    backgroundColor: colors.cream,
+    borderWidth: 2, borderColor: colors.blackAlpha08,
+    borderRadius: radii.md,
+    paddingVertical: 16,
+    fontFamily: fonts.num, fontSize: 28, fontWeight: '700',
+    letterSpacing: 12,
+    color: colors.ink,
+    textAlign: 'center',
+    writingDirection: 'ltr',
   },
-  btnDisabled: { opacity: 0.6 },
-  btnRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+
+  // ── Error ──
+  errorBox: {
+    flexDirection: 'row-reverse', alignItems: 'flex-start', gap: 10,
+    paddingHorizontal: 14, paddingVertical: 12,
+    backgroundColor: 'rgba(214,58,45,0.08)',
+    borderWidth: 1, borderColor: 'rgba(214,58,45,0.25)',
+    borderRadius: radii.sm,
+  },
+  errorIcon: {
+    width: 20, height: 20, borderRadius: 10,
+    backgroundColor: colors.bad,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  errorText: { color: colors.bad, fontSize: 14, flex: 1, textAlign: 'right' },
+
+  // ── Submit (primary big) ──
+  submit: {
+    flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center',
     gap: 10,
+    backgroundColor: colors.primary,
+    paddingVertical: 17, paddingHorizontal: 22,
+    borderRadius: radii.pill,
+    marginTop: 22,
+    shadowColor: colors.primaryDeep,
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 1, shadowRadius: 0,
+    elevation: 6,
   },
-  joinBtnText: {
-    color: '#eaf0ff',
-    fontSize: 17,
-    fontWeight: '800',
+  submitText: { color: '#fff', fontFamily: fonts.display, fontSize: 18, fontWeight: '700' },
+  submitArrow: { color: '#fff', fontSize: 22, fontWeight: '700' },
+
+  footer: {
+    fontFamily: fonts.body, fontSize: 13, lineHeight: 19,
+    color: colors.inkMute, textAlign: 'center', marginTop: 18,
   },
-  // ── Waiting ──
-  waitingCard: {
-    flex: 1,
-    paddingTop: 70,
-    paddingHorizontal: 24,
-  },
-  waitingHeader: {
-    alignItems: 'center',
-    marginBottom: 28,
-  },
-  waitingTitle: {
-    color: '#eaf0ff',
-    fontSize: 28,
-    fontWeight: '900',
-    marginBottom: 6,
-    letterSpacing: 2,
-  },
-  waitingSubtitle: {
-    color: 'rgba(234,240,255,0.55)',
-    fontSize: 14,
-  },
-  playersMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    justifyContent: 'flex-end',
-    marginBottom: 14,
-  },
-  playersCount: {
-    color: '#22d3ee',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  playersList: {
-    gap: 10,
-  },
-  playerItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+
+  // ═════ LOBBY ═════
+  lobby: {
+    paddingHorizontal: 20, paddingTop: 60, paddingBottom: 120,
     gap: 14,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderRadius: 16,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
   },
-  playerAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(34,211,238,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
+  you: {
+    backgroundColor: colors.ink,
+    borderRadius: radii.xl,
+    padding: 26,
+    position: 'relative',
+    overflow: 'hidden',
   },
-  playerAvatarText: {
-    color: '#22d3ee',
-    fontSize: 18,
-    fontWeight: '900',
+  youBlob: {
+    position: 'absolute',
+    top: -40, right: -60, width: 220, height: 220,
+    backgroundColor: colors.ans3, borderRadius: 110, opacity: 0.18,
   },
-  playerName: {
-    flex: 1,
-    color: '#eaf0ff',
-    fontSize: 15,
-    fontWeight: '700',
+  youLabel: {
+    fontFamily: fonts.body, fontSize: 13,
+    color: 'rgba(251,248,241,0.6)', fontWeight: '500',
     textAlign: 'right',
   },
-  youBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
-    backgroundColor: 'rgba(34,211,238,0.18)',
-    borderWidth: 1,
-    borderColor: 'rgba(34,211,238,0.3)',
+  youName: {
+    fontFamily: fonts.display, fontWeight: '800',
+    fontSize: 40, letterSpacing: -0.8, lineHeight: 42,
+    color: colors.ans3, marginVertical: 10, textAlign: 'right',
   },
-  youBadgeText: {
-    color: '#22d3ee',
-    fontSize: 11,
-    fontWeight: '700',
+  youStatus: {
+    flexDirection: 'row-reverse', alignItems: 'center', gap: 10,
+    paddingTop: 14, marginTop: 8,
+    borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.12)',
   },
-  pulseDot: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    marginTop: 28,
+  pulseDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.ans3 },
+  youStatusText: {
+    fontFamily: fonts.body, fontSize: 14,
+    color: 'rgba(251,248,241,0.85)',
   },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#22d3ee',
+
+  roster: {
+    backgroundColor: colors.paper,
+    borderWidth: 1, borderColor: 'rgba(20,18,26,0.06)',
+    borderRadius: radii.xl,
+    padding: 20,
   },
-  pulseText: {
-    color: 'rgba(234,240,255,0.5)',
-    fontSize: 13,
+  rosterHead: {
+    flexDirection: 'row-reverse', justifyContent: 'space-between',
+    alignItems: 'baseline', marginBottom: 14,
+  },
+  rosterTitle: {
+    fontFamily: fonts.display, fontWeight: '700',
+    fontSize: 17, color: colors.ink,
+  },
+  rosterCount: {
+    fontFamily: fonts.num, fontSize: 13, fontWeight: '600',
+    color: colors.inkMute,
+  },
+
+  player: {
+    flex: 1, padding: 12,
+    backgroundColor: colors.cream,
+    borderWidth: 1, borderColor: 'rgba(20,18,26,0.05)',
+    borderRadius: radii.md,
+    alignItems: 'center', gap: 6,
+  },
+  playerYou: {
+    backgroundColor: 'rgba(79,63,245,0.12)',
+    borderColor: colors.primary,
+  },
+  avatar: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: colors.ink,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  avatarText: {
+    fontFamily: fonts.display, fontWeight: '800',
+    fontSize: 18, color: colors.ans3,
+  },
+  playerName: {
+    fontSize: 12, fontWeight: '600', color: colors.ink,
+    textAlign: 'center', width: '100%',
+  },
+  youTag: {
+    paddingHorizontal: 8, paddingVertical: 2,
+    backgroundColor: '#fff', borderRadius: radii.pill,
+  },
+  youTagText: {
+    fontFamily: fonts.num, fontSize: 9, fontWeight: '700',
+    letterSpacing: 0.8, textTransform: 'uppercase',
+    color: colors.primary,
   },
 });

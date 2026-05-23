@@ -1,68 +1,50 @@
+// ===================================================================
+// app/auth/register.js — EduPlay design
+// תואם 1:1 ל-Register.jsx של האתר (frontend, branch: design/claudeDesign)
+// שינוי לוגי: הסרת confirmPassword (האתר לא משתמש בו)
+// ===================================================================
 import { useState } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
+  View, Text, TextInput, TouchableOpacity, ScrollView,
+  KeyboardAvoidingView, Platform, ActivityIndicator, StyleSheet,
 } from 'react-native';
 import axios from 'axios';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
 import { SERVER_URL } from '../../utils/socket';
+import { colors, fonts, radii } from '../../constants/theme';
+import { EpBrandMark, EpShape } from '../../components/EpBrand';
 
 export default function Register() {
-  const [idUser, setIdUser] = useState('');
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
+  const [idUser, setIdUser]     = useState('');
+  const [name, setName]         = useState('');
+  const [email, setEmail]       = useState('');
+  const [phone, setPhone]       = useState('');
   const [birthday, setBirthday] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [showPwd, setShowPwd]   = useState(false);
+  const [error, setError]       = useState('');
+  const [loading, setLoading]   = useState(false);
 
   const { login } = useAuth();
   const router = useRouter();
 
   const handleSubmit = async () => {
     setError('');
-
-    if (!idUser.trim() || !name.trim() || !email.trim() || !phone.trim() || !birthday.trim() || !password.trim() || !confirmPassword.trim()) {
-      setError('יש למלא את כל השדות');
-      return;
+    if (!idUser.trim() || !name.trim() || !email.trim() ||
+        !phone.trim() || !birthday.trim() || !password.trim()) {
+      return setError('יש למלא את כל השדות');
     }
-
-    if (password !== confirmPassword) {
-      setError('הסיסמאות אינן תואמות');
-      return;
-    }
-
     try {
       setLoading(true);
-
-      // שלב 1: הרשמה
       await axios.post(`${SERVER_URL}/auth/register`, {
-        id: idUser,
-        name,
-        email,
-        phone,
-        birthday,
-        password,
+        id: idUser, name, email, phone, birthday, password,
       });
-
-      // שלב 2: לוגין אוטומטי אחרי הרשמה
-      const loginRes = await axios.get(`${SERVER_URL}/auth/login`, {
-        params: { id: idUser, password }
+      const res = await axios.get(`${SERVER_URL}/auth/login`, {
+        params: { id: idUser, password },
       });
-
-      await login(loginRes.data.token);
+      await login(res.data.token);
       router.replace('/main/my-quizzes');
-
     } catch (err) {
       setError(err.response?.data?.message || 'שגיאה בהרשמה');
     } finally {
@@ -70,200 +52,301 @@ export default function Register() {
     }
   };
 
+  const chips = [
+    { c: colors.ans1, k: 'burst', t: 'חינם לחלוטין'      },
+    { c: colors.ans3, k: 'plus',  t: 'ללא הגבלת חידונים' },
+    { c: colors.ans4, k: 'wave',  t: 'עברית מלאה'         },
+  ];
+
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={{ flex: 1, backgroundColor: colors.cream }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <View style={styles.card}>
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1 }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ===== Brand hero ===== */}
+        <View style={regStyles.hero}>
+          <View style={[regStyles.blob, regStyles.blobA]}/>
+          <View style={[regStyles.blob, regStyles.blobB]}/>
 
-          <Text style={styles.kicker}>הרשמה</Text>
-          <Text style={styles.title}>צור חשבון חדש</Text>
-          <Text style={styles.subtitle}>הכנס את הפרטים שלך</Text>
+          <View style={{ paddingTop: 24 }}>
+            <EpBrandMark/>
+          </View>
 
-          <TextInput
-            style={styles.input}
-            placeholder="תעודת זהות"
-            placeholderTextColor="rgba(234,240,255,0.5)"
-            value={idUser}
-            onChangeText={setIdUser}
-            keyboardType="numeric"
-            autoCapitalize="none"
-            textAlign="right"
-          />
-
-          <TextInput
-            style={styles.input}
-            placeholder="שם מלא"
-            placeholderTextColor="rgba(234,240,255,0.5)"
-            value={name}
-            onChangeText={setName}
-            textAlign="right"
-          />
-
-          <TextInput
-            style={styles.input}
-            placeholder="אימייל"
-            placeholderTextColor="rgba(234,240,255,0.5)"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            textAlign="right"
-          />
-
-          <TextInput
-            style={styles.input}
-            placeholder="טלפון"
-            placeholderTextColor="rgba(234,240,255,0.5)"
-            value={phone}
-            onChangeText={setPhone}
-            keyboardType="phone-pad"
-            textAlign="right"
-          />
-
-          <TextInput
-            style={styles.input}
-            placeholder="תאריך לידה (DD/MM/YYYY)"
-            placeholderTextColor="rgba(234,240,255,0.5)"
-            value={birthday}
-            onChangeText={setBirthday}
-            textAlign="right"
-          />
-
-          <TextInput
-            style={styles.input}
-            placeholder="סיסמה"
-            placeholderTextColor="rgba(234,240,255,0.5)"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            textAlign="right"
-          />
-
-          <TextInput
-            style={styles.input}
-            placeholder="אימות סיסמה"
-            placeholderTextColor="rgba(234,240,255,0.5)"
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            secureTextEntry
-            textAlign="right"
-          />
-
-          {error ? (
-            <View style={styles.errorBox}>
-              <Text style={styles.errorText}>⚠️ {error}</Text>
+          <View style={{ marginTop: 22 }}>
+            <View style={regStyles.kicker}>
+              <View style={regStyles.kickerDot}/>
+              <Text style={regStyles.kickerText}>
+                הצטרפו לקהילה
+              </Text>
             </View>
-          ) : null}
+            <Text style={regStyles.heroTitle}>
+              שני דקות להרשמה,{'\n'}
+              שנים של <Text style={{ color: colors.ans3 }}>חידונים.</Text>
+            </Text>
+          </View>
 
+          <View style={regStyles.chips}>
+            {chips.map((c, i) => (
+              <View key={i} style={regStyles.chip}>
+                <EpShape kind={c.k} color={c.c} size={12}/>
+                <Text style={regStyles.chipText}>{c.t}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* ===== Form ===== */}
+        <View style={regStyles.form}>
+          <View>
+            <Text style={regStyles.formKicker}>הרשמה</Text>
+            <Text style={regStyles.formTitle}>יוצרים חשבון</Text>
+            <Text style={regStyles.formSub}>
+              כל השדות חובה · יידרשו 30 שניות
+            </Text>
+          </View>
+
+          <View style={{ gap: 14 }}>
+            {/* שם מלא */}
+            <Field
+              label="שם מלא"
+              placeholder="לדוגמה: מתן עמרם"
+              value={name} onChangeText={setName}
+              autoComplete="name"
+            />
+
+            {/* ת.ז + תאריך לידה — 2 עמודות */}
+            <View style={{ flexDirection: 'row-reverse', gap: 12 }}>
+              <View style={{ flex: 1 }}>
+                <Field
+                  label="תעודת זהות"
+                  placeholder="9 ספרות"
+                  value={idUser} onChangeText={setIdUser}
+                  keyboardType="numeric"
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Field
+                  label="תאריך לידה"
+                  placeholder="DD/MM/YYYY"
+                  value={birthday} onChangeText={setBirthday}
+                />
+              </View>
+            </View>
+
+            {/* אימייל */}
+            <Field
+              label="אימייל"
+              placeholder="name@example.com"
+              value={email} onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+
+            {/* טלפון */}
+            <Field
+              label="טלפון"
+              placeholder="05X-XXXXXXX"
+              value={phone} onChangeText={setPhone}
+              keyboardType="phone-pad"
+            />
+
+            {/* סיסמה */}
+            <View>
+              <View style={regStyles.labelRow}>
+                <Text style={regStyles.label}>סיסמה</Text>
+                <TouchableOpacity onPress={() => setShowPwd(s => !s)}>
+                  <Text style={regStyles.toggle}>
+                    {showPwd ? 'הסתר' : 'הצג'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <TextInput
+                style={regStyles.input}
+                placeholder="לפחות 8 תווים"
+                placeholderTextColor={colors.inkMute}
+                secureTextEntry={!showPwd}
+                textAlign="right"
+                value={password}
+                onChangeText={setPassword}
+              />
+              <Text style={regStyles.hint}>
+                לפחות 8 תווים, אות גדולה, ספרה ותו מיוחד
+              </Text>
+            </View>
+
+            {error ? (
+              <View style={regStyles.errorBox}>
+                <View style={regStyles.errorIcon}>
+                  <Text style={regStyles.errorIconText}>!</Text>
+                </View>
+                <Text style={regStyles.errorText}>{error}</Text>
+              </View>
+            ) : null}
+          </View>
+
+          {/* Submit */}
           <TouchableOpacity
-            style={styles.button}
+            style={regStyles.submit}
+            activeOpacity={0.85}
             onPress={handleSubmit}
             disabled={loading}
           >
             {loading
-              ? <ActivityIndicator color="#fff" />
-              : <Text style={styles.buttonText}>הירשם ←</Text>
+              ? <ActivityIndicator color={colors.paper}/>
+              : <>
+                  <Text style={regStyles.submitText}>הירשם</Text>
+                  <Text style={regStyles.submitArrow}>←</Text>
+                </>
             }
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => router.push('/auth/login')}>
-            <Text style={styles.link}>
-              כבר יש לך חשבון?{' '}
-              <Text style={styles.linkBold}>התחבר</Text>
+          {/* Footer */}
+          <Text style={regStyles.footerText}>
+            כבר יש לך חשבון?{' '}
+            <Text
+              style={[regStyles.link, { color: colors.primary }]}
+              onPress={() => router.push('/auth/login')}
+            >
+              התחבר ←
             </Text>
-          </TouchableOpacity>
-
+          </Text>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
+/* ── Field helper ───────────────────────────────────────── */
+function Field({ label, ...inputProps }) {
+  return (
+    <View>
+      <Text style={regStyles.label}>{label}</Text>
+      <TextInput
+        style={regStyles.input}
+        placeholderTextColor={colors.inkMute}
+        textAlign="right"
+        {...inputProps}
+      />
+    </View>
+  );
+}
+
+const regStyles = StyleSheet.create({
+  // ─── HERO ───
+  hero: {
+    backgroundColor: colors.ink,
+    paddingHorizontal: 24,
+    paddingTop: 60,
+    paddingBottom: 32,
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+    overflow: 'hidden',
+  },
+  blob: { position: 'absolute', borderRadius: 9999 },
+  // צבעי blobs שונים מ-Login (כמו באתר): ans-1 (coral) + ans-2 (violet)
+  blobA: { top: -80, left: -60, width: 220, height: 220, backgroundColor: colors.ans1, opacity: 0.32 },
+  blobB: { bottom: -120, right: 40, width: 200, height: 200, backgroundColor: colors.ans2, opacity: 0.4 },
+
+  kicker: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
+  kickerDot: { width: 7, height: 7, backgroundColor: colors.ans3, transform: [{ rotate: '45deg' }] },
+  kickerText: { color: colors.ans3, fontFamily: fonts.num, fontSize: 12, fontWeight: '600', letterSpacing: 0.4 },
+
+  heroTitle: {
+    color: colors.paper, fontFamily: fonts.display, fontWeight: '800',
+    fontSize: 32, lineHeight: 36, letterSpacing: -0.6, textAlign: 'right',
+  },
+
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 22 },
+  chip: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: 11, paddingVertical: 7,
+    backgroundColor: colors.whiteAlpha10,
+    borderWidth: 1, borderColor: colors.whiteAlpha20,
+    borderRadius: radii.pill,
+  },
+  chipText: { color: colors.paper, fontFamily: fonts.body, fontSize: 12, fontWeight: '600' },
+
+  // ─── FORM ───
+  form: {
     flex: 1,
-    backgroundColor: '#070815',
+    paddingHorizontal: 24,
+    paddingTop: 26, paddingBottom: 36,
+    gap: 20, backgroundColor: colors.cream,
   },
-  scroll: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    padding: 24,
+
+  formKicker: {
+    fontFamily: fonts.num, fontSize: 11, fontWeight: '600',
+    color: colors.inkMute, letterSpacing: 1.2, marginBottom: 6,
+    textTransform: 'uppercase', textAlign: 'right',
   },
-  card: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderRadius: 26,
-    padding: 28,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.14)',
+  formTitle: {
+    fontFamily: fonts.display, fontWeight: '800', fontSize: 30,
+    color: colors.ink, letterSpacing: -0.6, textAlign: 'right',
   },
-  kicker: {
-    color: 'rgba(234,240,255,0.75)',
-    fontSize: 12,
-    letterSpacing: 2,
-    textTransform: 'uppercase',
-    textAlign: 'right',
-    marginBottom: 8,
+  formSub: {
+    fontFamily: fonts.body, fontSize: 14, color: colors.ink3,
+    marginTop: 6, textAlign: 'right',
   },
-  title: {
-    color: '#eaf0ff',
-    fontSize: 24,
-    fontWeight: '900',
-    textAlign: 'right',
-    marginBottom: 6,
+
+  labelRow: {
+    flexDirection: 'row-reverse', justifyContent: 'space-between',
+    alignItems: 'center', marginBottom: 8,
   },
-  subtitle: {
-    color: 'rgba(234,240,255,0.68)',
-    fontSize: 14,
-    textAlign: 'right',
-    marginBottom: 24,
+  label: {
+    fontFamily: fonts.body, fontSize: 13, fontWeight: '600',
+    color: colors.ink3, marginBottom: 8, textAlign: 'right',
   },
+  toggle: { color: colors.primary, fontSize: 13, fontWeight: '600' },
+
   input: {
-    backgroundColor: 'rgba(0,0,0,0.28)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.14)',
-    borderRadius: 16,
-    padding: 16,
-    color: '#eaf0ff',
-    fontSize: 15,
-    marginBottom: 14,
+    backgroundColor: colors.paper,
+    borderWidth: 2, borderColor: colors.blackAlpha08,
+    borderRadius: radii.md,
+    paddingHorizontal: 16, paddingVertical: 14,
+    fontFamily: fonts.body, fontSize: 15, fontWeight: '500',
+    color: colors.ink,
   },
-  errorBox: {
-    backgroundColor: 'rgba(251,113,133,0.10)',
-    borderWidth: 1,
-    borderColor: 'rgba(251,113,133,0.38)',
-    borderRadius: 14,
-    padding: 12,
-    marginBottom: 14,
-  },
-  errorText: {
-    color: 'rgba(255,230,236,0.95)',
-    fontSize: 13,
+  hint: {
+    fontSize: 12, color: colors.inkMute, marginTop: 6,
     textAlign: 'right',
   },
-  button: {
-    backgroundColor: 'rgba(34,211,238,0.22)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.16)',
-    borderRadius: 18,
-    padding: 16,
-    alignItems: 'center',
-    marginBottom: 20,
+
+  errorBox: {
+    flexDirection: 'row-reverse', alignItems: 'flex-start', gap: 10,
+    paddingHorizontal: 14, paddingVertical: 12,
+    backgroundColor: 'rgba(214,58,45,0.08)',
+    borderWidth: 1, borderColor: 'rgba(214,58,45,0.25)',
+    borderRadius: radii.sm,
   },
-  buttonText: {
-    color: '#eaf0ff',
-    fontSize: 16,
-    fontWeight: '900',
+  errorIcon: {
+    width: 20, height: 20, borderRadius: 10,
+    backgroundColor: colors.bad,
+    alignItems: 'center', justifyContent: 'center',
   },
-  link: {
-    color: 'rgba(234,240,255,0.62)',
-    fontSize: 14,
-    textAlign: 'center',
+  errorIconText: { color: '#fff', fontWeight: '900', fontSize: 12 },
+  errorText: { color: colors.bad, fontSize: 14, flex: 1, textAlign: 'right' },
+
+  // Submit
+  submit: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 10,
+    backgroundColor: colors.ink,
+    paddingVertical: 16, paddingHorizontal: 22,
+    borderRadius: radii.pill,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1, shadowRadius: 0,
+    elevation: 5,
+    marginTop: 4,
   },
-  linkBold: {
-    color: '#22d3ee',
-    fontWeight: '700',
-  },
+  submitText: { color: colors.paper, fontFamily: fonts.display, fontSize: 17, fontWeight: '700' },
+  submitArrow: { color: colors.paper, fontSize: 20, fontWeight: '700' },
+
+  footerText: { fontSize: 14, color: colors.ink3, textAlign: 'center' },
+  link: { color: colors.primary, fontWeight: '700' },
 });

@@ -1,293 +1,281 @@
-import React, { useState, useCallback } from 'react';
+// ===================================================================
+// app/main/my-quizzes.js — EduPlay design
+// תואם לאתר (MyQuizzes.jsx): רקע cream, כותרת ענקית, kicker עם
+// סטטיסטיקות, CTA פרימרי, גריד כרטיסי QuizCard עם פס צבעוני,
+// ומצב ריק עם 4 צורות גיאומטריות
+// ===================================================================
+import { useState, useCallback } from 'react';
 import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-  RefreshControl,
-  Dimensions,
+  View, Text, FlatList, TouchableOpacity,
+  ActivityIndicator, RefreshControl, Alert, StyleSheet,
 } from 'react-native';
 import axios from 'axios';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
 import { SERVER_URL } from '../../utils/socket';
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-
-const { width } = Dimensions.get('window');
+import { colors, fonts, radii } from '../../constants/theme';
+import EpQuizCard from '../../components/EpQuizCard';
+import { EpShape } from '../../components/EpBrand';
 
 export default function MyQuizzes() {
   const [quizzes, setQuizzes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState('');
 
   const { token } = useAuth();
   const router = useRouter();
 
   const fetchQuizzes = async () => {
     try {
-      setError('');
       const res = await axios.get(`${SERVER_URL}/quizzes/my`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       setQuizzes(res.data);
     } catch (err) {
-      setError(err.response?.data?.message || 'שגיאה בטעינת השאלונים');
+      console.error(err);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchQuizzes();
-    }, [])
-  );
+  useFocusEffect(useCallback(() => { fetchQuizzes(); }, []));
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    fetchQuizzes();
+  const handleDelete = (id) => {
+    Alert.alert('מחיקת חידון', 'למחוק את החידון לצמיתות?', [
+      { text: 'ביטול', style: 'cancel' },
+      {
+        text: 'מחק', style: 'destructive',
+        onPress: async () => {
+          try {
+            await axios.delete(`${SERVER_URL}/quizzes/${id}`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            setQuizzes(prev => prev.filter(q => q._id !== id));
+          } catch {
+            Alert.alert('שגיאה', 'לא ניתן למחוק את החידון');
+          }
+        },
+      },
+    ]);
   };
 
-  const renderQuiz = ({ item, index }) => (
-    <TouchableOpacity
-      activeOpacity={0.8}
-      style={styles.cardWrapper}
-      onPress={() => router.push(`/main/create-room?quizId=${item._id}&title=${item.title}`)}
-    >
-      <LinearGradient
-        colors={['rgba(255,255,255,0.08)', 'rgba(255,255,255,0.03)']}
-        style={styles.card}
-      >
-        <View style={styles.iconContainer}>
-            <LinearGradient
-                colors={['#22d3ee', '#0ea5e9']}
-                style={styles.iconCircle}
-            >
-                <Ionicons name="flash" size={20} color="#fff" />
-            </LinearGradient>
-        </View>
-
-        <Text style={styles.cardTitle} numberOfLines={1}>{item.title}</Text>
-        
-        <Text style={styles.cardDesc} numberOfLines={2}>
-            {item.description || "אין תיאור זמין לשאלון זה..."}
-        </Text>
-
-        <View style={styles.cardFooter}>
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>{item.questions?.length ?? 0} שאלות</Text>
-          </View>
-          <Ionicons name="chevron-back-circle" size={24} color="rgba(255,255,255,0.3)" />
-        </View>
-      </LinearGradient>
-    </TouchableOpacity>
-  );
-
+  // ── Loading ──
   if (loading && !refreshing) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#22d3ee" />
+      <View style={[myqStyles.container, myqStyles.center]}>
+        <ActivityIndicator size="large" color={colors.primary}/>
+        <Text style={myqStyles.loaderText}>טוען את הספרייה שלך…</Text>
       </View>
     );
   }
 
-  return (
-    <View style={styles.container}>
-      <LinearGradient
-        colors={['#0f172a', '#070815']}
-        style={StyleSheet.absoluteFill}
-      />
+  const count = quizzes.length;
+  const totalQ = quizzes.reduce((s, q) => s + (q.questions?.length || 0), 0);
 
-      {/* Header Custom */}
-      <View style={styles.header}>
-        <TouchableOpacity 
-            style={styles.addBtn}
-            onPress={() => router.push('/main/create-quiz')}
+  // ── Header (sticky-ish) ──
+  const renderHeader = () => (
+    <View style={myqStyles.header}>
+      <View style={{ flex: 1 }}>
+        <Text style={myqStyles.kicker}>
+          הספרייה שלך
+          {count > 0 && (
+            <Text style={myqStyles.kickerStat}>
+              {' · '}{count} {count === 1 ? 'חידון' : 'חידונים'}
+              {totalQ > 0 && `  ·  ${totalQ} שאלות`}
+            </Text>
+          )}
+        </Text>
+        <Text style={myqStyles.title}>החידונים שלי</Text>
+      </View>
+
+      {count > 0 && (
+        <TouchableOpacity
+          style={myqStyles.cta}
+          activeOpacity={0.85}
+          onPress={() => router.push('/main/create-quiz')}
         >
-          <LinearGradient
-            colors={['#22d3ee', '#06b6d4']}
-            style={styles.addBtnGradient}
-          >
-            <Ionicons name="add" size={28} color="#070815" />
-          </LinearGradient>
+          <Text style={myqStyles.ctaPlus}>+</Text>
+          <Text style={myqStyles.ctaText}>חידון חדש</Text>
         </TouchableOpacity>
-        
-        <View>
-            <Text style={styles.headerTitle}>השאלונים שלי</Text>
-            <Text style={styles.headerSub}>{quizzes.length} שאלונים מוכנים לשימוש</Text>
+      )}
+    </View>
+  );
+
+  // ── Empty State ──
+  const renderEmpty = () => (
+    <View style={myqStyles.empty}>
+      <View style={myqStyles.emptyArt}>
+        <View style={[myqStyles.shapeAbs, { top: 0,  left: 20 }]}>
+          <EpShape kind="burst" color={colors.ans1} size={40}/>
+        </View>
+        <View style={[myqStyles.shapeAbs, { top: 30, right: 0, transform: [{ rotate: '8deg' }] }]}>
+          <EpShape kind="hex" color={colors.ans2} size={50}/>
+        </View>
+        <View style={[myqStyles.shapeAbs, { bottom: 0, left: 50 }]}>
+          <EpShape kind="plus" color={colors.ans3} size={36}/>
+        </View>
+        <View style={[myqStyles.shapeAbs, { top: 20, left: 100, transform: [{ rotate: '-12deg' }] }]}>
+          <EpShape kind="wave" color={colors.ans4} size={44}/>
         </View>
       </View>
 
-      {error ? (
-        <View style={styles.errorBox}>
-          <Text style={styles.errorText}>⚠️ {error}</Text>
-        </View>
-      ) : null}
+      <Text style={myqStyles.emptyTitle}>אין כאן עדיין חידונים</Text>
+      <Text style={myqStyles.emptySub}>
+        צרו את החידון הראשון שלכם ב-2 דקות —{'\n'}
+        ידנית עם 4 תשובות לשאלה, או בעזרת בינה מלאכותית.
+      </Text>
 
+      <View style={{ flexDirection: 'column', gap: 10, alignItems: 'stretch', width: '100%' }}>
+        <TouchableOpacity
+          style={myqStyles.cta}
+          activeOpacity={0.85}
+          onPress={() => router.push('/main/create-quiz')}
+        >
+          <Text style={myqStyles.ctaPlus}>+</Text>
+          <Text style={myqStyles.ctaText}>צרו חידון ראשון</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[myqStyles.cta, myqStyles.ctaGhost]}
+          activeOpacity={0.85}
+          onPress={() => router.push('/main/join-room')}
+        >
+          <Text style={[myqStyles.ctaText, { color: colors.ink }]}>או הצטרפו לחדר של חבר</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  return (
+    <View style={myqStyles.container}>
       <FlatList
         data={quizzes}
         keyExtractor={(item) => item._id}
-        renderItem={renderQuiz}
-        numColumns={2}
-        contentContainerStyle={styles.list}
-        columnWrapperStyle={styles.columnWrapper}
+        renderItem={({ item, index }) => (
+          <EpQuizCard
+            quiz={item}
+            colorIndex={index}
+            onPress={() => router.push(
+              `/main/create-room?quizId=${item._id}&title=${encodeURIComponent(item.title)}`
+            )}
+            onDelete={handleDelete}
+          />
+        )}
+        ListHeaderComponent={renderHeader}
+        ListEmptyComponent={renderEmpty}
+        contentContainerStyle={myqStyles.list}
         showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-             <Ionicons name="rocket-outline" size={80} color="rgba(34,211,238,0.1)" />
-             <Text style={styles.emptyText}>הגיע הזמן ליצור משהו גדול!</Text>
-             <TouchableOpacity style={styles.emptyCreateBtn} onPress={() => router.push('/main/create-quiz')}>
-                <Text style={styles.emptyCreateBtnText}>צור שאלון חדש</Text>
-             </TouchableOpacity>
-          </View>
-        }
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#22d3ee" />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => { setRefreshing(true); fetchQuizzes(); }}
+            tintColor={colors.primary}
+          />
         }
       />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const myqStyles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.cream,
   },
-  loadingContainer: {
-    flex: 1,
-    backgroundColor: '#070815',
-    justifyContent: 'center',
+  center: { justifyContent: 'center', alignItems: 'center', gap: 16 },
+  loaderText: {
+    fontFamily: fonts.num, fontSize: 12, fontWeight: '500',
+    letterSpacing: 1.2, textTransform: 'uppercase',
+    color: colors.inkMute,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 25,
-  },
-  headerTitle: {
-    color: '#fff',
-    fontSize: 28,
-    fontWeight: '900',
-    textAlign: 'right',
-    letterSpacing: -0.5,
-  },
-  headerSub: {
-    color: 'rgba(234,240,255,0.5)',
-    fontSize: 14,
-    textAlign: 'right',
-  },
-  addBtnGradient: {
-    width: 50,
-    height: 50,
-    borderRadius: 15,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 10,
-    shadowColor: '#22d3ee',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-  },
+
   list: {
-    paddingHorizontal: 16,
-    paddingBottom: 40,
+    paddingHorizontal: 20,
+    paddingTop: 60,
+    paddingBottom: 120, // מקום לבר הצף התחתון
   },
-  columnWrapper: {
+
+  // Header
+  header: {
+    flexDirection: 'row-reverse',
+    alignItems: 'flex-end',
     justifyContent: 'space-between',
+    marginBottom: 24,
+    gap: 14,
   },
-  cardWrapper: {
-    width: (width / 2) - 24,
-    marginBottom: 16,
+  kicker: {
+    fontFamily: fonts.num, fontSize: 11, fontWeight: '600',
+    letterSpacing: 1.2, textTransform: 'uppercase',
+    color: colors.inkMute,
+    textAlign: 'right',
+    marginBottom: 6,
   },
-  card: {
-    borderRadius: 24,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    height: 190,
-    justifyContent: 'space-between',
+  kickerStat: { color: colors.ink3 },
+  title: {
+    fontFamily: fonts.display, fontWeight: '800',
+    fontSize: 36, letterSpacing: -0.9, lineHeight: 38,
+    color: colors.ink,
+    textAlign: 'right',
   },
-  iconContainer: {
-    marginBottom: 12,
-    flexDirection: 'row-reverse'
-  },
-  iconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
+
+  // CTA primary
+  cta: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
-  },
-  cardTitle: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '800',
-    textAlign: 'right',
-    marginBottom: 4,
-  },
-  cardDesc: {
-    color: 'rgba(234,240,255,0.5)',
-    fontSize: 12,
-    textAlign: 'right',
-    lineHeight: 16,
-    flex: 1,
-  },
-  cardFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  badge: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  badgeText: {
-    color: '#22d3ee',
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    marginTop: 100,
-  },
-  emptyText: {
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: 18,
-    fontWeight: '600',
-    marginTop: 20,
-  },
-  emptyCreateBtn: {
-    marginTop: 20,
-    backgroundColor: '#22d3ee',
-    paddingHorizontal: 30,
+    gap: 6,
     paddingVertical: 12,
-    borderRadius: 15,
+    paddingHorizontal: 18,
+    backgroundColor: colors.primary,
+    borderRadius: radii.pill,
+    shadowColor: colors.primaryDeep,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1, shadowRadius: 0,
+    elevation: 4,
   },
-  emptyCreateBtnText: {
-    color: '#070815',
-    fontWeight: '800',
+  ctaPlus: {
+    fontFamily: fonts.display, fontWeight: '900',
+    fontSize: 22, color: '#fff', lineHeight: 22,
   },
-  errorBox: {
-    backgroundColor: 'rgba(255, 70, 70, 0.1)',
-    margin: 16,
-    padding: 12,
-    borderRadius: 12,
+  ctaText: {
+    fontFamily: fonts.display, fontWeight: '700',
+    fontSize: 14, color: '#fff',
+  },
+  ctaGhost: {
+    backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: 'rgba(255, 70, 70, 0.3)',
+    borderColor: 'rgba(20,18,26,0.18)',
+    shadowOpacity: 0,
+    elevation: 0,
   },
-  errorText: {
-    color: '#ff4646',
-    textAlign: 'right',
-  }
+
+  // Empty state
+  empty: {
+    marginTop: 28,
+    backgroundColor: colors.paper,
+    borderWidth: 1, borderColor: 'rgba(20,18,26,0.06)',
+    borderRadius: radii.xl,
+    padding: 32,
+    alignItems: 'center',
+  },
+  emptyArt: {
+    width: 220, height: 130,
+    marginBottom: 22,
+    position: 'relative',
+  },
+  shapeAbs: { position: 'absolute', opacity: 0.85 },
+  emptyTitle: {
+    fontFamily: fonts.display, fontWeight: '800',
+    fontSize: 26, letterSpacing: -0.6,
+    color: colors.ink, marginBottom: 10,
+    textAlign: 'center',
+  },
+  emptySub: {
+    fontFamily: fonts.body,
+    fontSize: 14, lineHeight: 22,
+    color: colors.ink3,
+    textAlign: 'center',
+    marginBottom: 22,
+  },
 });
