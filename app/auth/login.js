@@ -1,24 +1,24 @@
+// ===================================================================
+// app/auth/login.js — EduPlay design
+// תואם 1:1 ל-Login.jsx של האתר (frontend, branch: design/claudeDesign)
+// ===================================================================
 import { useState } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
+  View, Text, TextInput, TouchableOpacity, ScrollView,
+  KeyboardAvoidingView, Platform, ActivityIndicator, StyleSheet,
 } from 'react-native';
 import axios from 'axios';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
 import { SERVER_URL } from '../../utils/socket';
+import { colors, fonts, radii } from '../../constants/theme';
+import { EpBrandMark, EpShape } from '../../components/EpBrand';
 
 export default function Login() {
-  const [idUser, setIdUser] = useState('');
+  const [idUser, setIdUser]   = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError]     = useState('');
+  const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const { login } = useAuth();
@@ -26,21 +26,16 @@ export default function Login() {
 
   const handleSubmit = async () => {
     setError('');
-
     if (!idUser.trim() || !password.trim()) {
-      setError('יש למלא תעודת זהות וסיסמה');
-      return;
+      return setError('יש למלא תעודת זהות וסיסמה');
     }
-
     try {
       setLoading(true);
       const res = await axios.get(`${SERVER_URL}/auth/login`, {
-        params: { id: idUser, password }
+        params: { id: idUser, password },
       });
-
       await login(res.data.token);
       router.replace('/main/my-quizzes');
-
     } catch (err) {
       setError(err.response?.data?.message || 'שגיאה בהתחברות');
     } finally {
@@ -48,151 +43,269 @@ export default function Login() {
     }
   };
 
+  const chips = [
+    { c: colors.ans1, k: 'burst', t: 'חידונים מבוססי AI' },
+    { c: colors.ans3, k: 'plus',  t: 'סטטיסטיקות חיות'  },
+    { c: colors.ans4, k: 'wave',  t: 'ללא הורדה'         },
+  ];
+
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={{ flex: 1, backgroundColor: colors.cream }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <View style={styles.card}>
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1 }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ===== Brand hero (כמו צד שמאל באתר) ===== */}
+        <View style={loginStyles.hero}>
+          <View style={[loginStyles.blob, loginStyles.blobA]}/>
+          <View style={[loginStyles.blob, loginStyles.blobB]}/>
 
-          <Text style={styles.kicker}>התחברות</Text>
-          <Text style={styles.title}>התחבר למשתמש שלך</Text>
-          <Text style={styles.subtitle}>הכנס תעודת זהות וסיסמה</Text>
+          <View style={{ paddingTop: 24 }}>
+            <EpBrandMark/>
+          </View>
 
-          <TextInput
-            style={styles.input}
-            placeholder="תעודת זהות"
-            placeholderTextColor="rgba(234,240,255,0.5)"
-            value={idUser}
-            onChangeText={setIdUser}
-            keyboardType="numeric"
-            autoCapitalize="none"
-            textAlign="right"
-          />
-
-          <TextInput
-            style={styles.input}
-            placeholder="סיסמה"
-            placeholderTextColor="rgba(234,240,255,0.5)"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            textAlign="right"
-          />
-
-          {error ? (
-            <View style={styles.errorBox}>
-              <Text style={styles.errorText}>⚠️ {error}</Text>
+          <View style={{ marginTop: 24 }}>
+            <View style={loginStyles.kicker}>
+              <View style={loginStyles.kickerDot}/>
+              <Text style={loginStyles.kickerText}>
+                פלטפורמת חידונים בזמן אמת
+              </Text>
             </View>
-          ) : null}
+            <Text style={loginStyles.heroTitle}>
+              לימוד שמרגיש{'\n'}
+              כמו <Text style={{ color: colors.ans3 }}>משחק.</Text>
+            </Text>
+          </View>
 
+          <View style={loginStyles.chips}>
+            {chips.map((c, i) => (
+              <View key={i} style={loginStyles.chip}>
+                <EpShape kind={c.k} color={c.c} size={12}/>
+                <Text style={loginStyles.chipText}>{c.t}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* ===== Form (כמו צד ימין באתר) ===== */}
+        <View style={loginStyles.form}>
+          <View>
+            <Text style={loginStyles.formKicker}>התחברות</Text>
+            <Text style={loginStyles.formTitle}>ברוכים השבים</Text>
+            <Text style={loginStyles.formSub}>
+              הזינו תעודת זהות וסיסמה כדי להמשיך
+            </Text>
+          </View>
+
+          <View style={{ gap: 14 }}>
+            {/* ID */}
+            <View>
+              <Text style={loginStyles.label}>תעודת זהות</Text>
+              <TextInput
+                style={loginStyles.input}
+                placeholder="9 ספרות"
+                placeholderTextColor={colors.inkMute}
+                keyboardType="numeric"
+                inputMode="numeric"
+                autoCapitalize="none"
+                textAlign="right"
+                value={idUser}
+                onChangeText={setIdUser}
+              />
+            </View>
+
+            {/* Password */}
+            <View>
+              <View style={loginStyles.labelRow}>
+                <Text style={loginStyles.label}>סיסמה</Text>
+                <TouchableOpacity onPress={() => setShowPwd(s => !s)}>
+                  <Text style={loginStyles.toggle}>
+                    {showPwd ? 'הסתר' : 'הצג'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <TextInput
+                style={loginStyles.input}
+                placeholder="••••••••"
+                placeholderTextColor={colors.inkMute}
+                secureTextEntry={!showPwd}
+                textAlign="right"
+                value={password}
+                onChangeText={setPassword}
+              />
+            </View>
+
+            {error ? (
+              <View style={loginStyles.errorBox}>
+                <View style={loginStyles.errorIcon}>
+                  <Text style={loginStyles.errorIconText}>!</Text>
+                </View>
+                <Text style={loginStyles.errorText}>{error}</Text>
+              </View>
+            ) : null}
+          </View>
+
+          {/* Submit */}
           <TouchableOpacity
-            style={styles.button}
+            style={loginStyles.submit}
+            activeOpacity={0.85}
             onPress={handleSubmit}
             disabled={loading}
           >
             {loading
-              ? <ActivityIndicator color="#fff" />
-              : <Text style={styles.buttonText}>התחבר ←</Text>
+              ? <ActivityIndicator color={colors.paper}/>
+              : <>
+                  <Text style={loginStyles.submitText}>התחבר</Text>
+                  <Text style={loginStyles.submitArrow}>←</Text>
+                </>
             }
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => router.push('/auth/register')}>
-            <Text style={styles.link}>
-              עדיין אין לך חשבון?{' '}
-              <Text style={styles.linkBold}>הירשם</Text>
-            </Text>
-          </TouchableOpacity>
+          {/* Divider "או" */}
+          <View style={loginStyles.divider}>
+            <View style={loginStyles.dividerLine}/>
+            <Text style={loginStyles.dividerText}>או</Text>
+            <View style={loginStyles.dividerLine}/>
+          </View>
 
+          {/* Footer links */}
+          <View style={{ alignItems: 'center', gap: 6 }}>
+            <Text style={loginStyles.footerText}>
+              חדש כאן?{' '}
+              <Text
+                style={[loginStyles.link, { color: colors.primary }]}
+                onPress={() => router.push('/auth/register')}
+              >
+                צרו חשבון
+              </Text>
+            </Text>
+            <Text
+              style={[loginStyles.footerText, loginStyles.link, { marginTop: 4 }]}
+              onPress={() => router.push('/main/join-room')}
+            >
+              הצטרפו לחדר ללא הרשמה ←
+            </Text>
+          </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
+const loginStyles = StyleSheet.create({
+  // ─── HERO (top, ink) ───
+  hero: {
+    backgroundColor: colors.ink,
+    paddingHorizontal: 24,
+    paddingTop: 60,
+    paddingBottom: 32,
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+    overflow: 'hidden',
+  },
+  blob: { position: 'absolute', borderRadius: 9999, opacity: 0.4 },
+  blobA: { top: -80, left: -60, width: 220, height: 220, backgroundColor: colors.ans2 },
+  blobB: { bottom: -120, right: 40, width: 200, height: 200, backgroundColor: colors.ans3, opacity: 0.22 },
+
+  kicker: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
+  kickerDot: { width: 7, height: 7, backgroundColor: colors.ans3, transform: [{ rotate: '45deg' }] },
+  kickerText: { color: colors.ans3, fontFamily: fonts.num, fontSize: 12, fontWeight: '600', letterSpacing: 0.4 },
+
+  heroTitle: {
+    color: colors.paper, fontFamily: fonts.display, fontWeight: '800',
+    fontSize: 38, lineHeight: 40, letterSpacing: -0.8, textAlign: 'right',
+  },
+
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 22 },
+  chip: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: 11, paddingVertical: 7,
+    backgroundColor: colors.whiteAlpha10,
+    borderWidth: 1, borderColor: colors.whiteAlpha20,
+    borderRadius: radii.pill,
+  },
+  chipText: { color: colors.paper, fontFamily: fonts.body, fontSize: 12, fontWeight: '600' },
+
+  // ─── FORM (bottom, cream) ───
+  form: {
     flex: 1,
-    backgroundColor: '#070815',
+    paddingHorizontal: 24,
+    paddingTop: 28, paddingBottom: 36,
+    gap: 22, backgroundColor: colors.cream,
   },
-  scroll: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    padding: 24,
+
+  formKicker: {
+    fontFamily: fonts.num, fontSize: 11, fontWeight: '600',
+    color: colors.inkMute, letterSpacing: 1.2, marginBottom: 6,
+    textTransform: 'uppercase', textAlign: 'right',
   },
-  card: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderRadius: 26,
-    padding: 28,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.14)',
+  formTitle: {
+    fontFamily: fonts.display, fontWeight: '800', fontSize: 32,
+    color: colors.ink, letterSpacing: -0.6, textAlign: 'right',
   },
-  kicker: {
-    color: 'rgba(234,240,255,0.75)',
-    fontSize: 12,
-    letterSpacing: 2,
-    textTransform: 'uppercase',
-    textAlign: 'right',
-    marginBottom: 8,
+  formSub: {
+    fontFamily: fonts.body, fontSize: 14, color: colors.ink3,
+    marginTop: 6, textAlign: 'right',
   },
-  title: {
-    color: '#eaf0ff',
-    fontSize: 24,
-    fontWeight: '900',
-    textAlign: 'right',
-    marginBottom: 6,
+
+  labelRow: {
+    flexDirection: 'row-reverse', justifyContent: 'space-between',
+    alignItems: 'center', marginBottom: 8,
   },
-  subtitle: {
-    color: 'rgba(234,240,255,0.68)',
-    fontSize: 14,
-    textAlign: 'right',
-    marginBottom: 24,
+  label: {
+    fontFamily: fonts.body, fontSize: 13, fontWeight: '600',
+    color: colors.ink3, marginBottom: 8, textAlign: 'right',
   },
+  toggle: { color: colors.primary, fontSize: 13, fontWeight: '600' },
+
   input: {
-    backgroundColor: 'rgba(0,0,0,0.28)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.14)',
-    borderRadius: 16,
-    padding: 16,
-    color: '#eaf0ff',
-    fontSize: 15,
-    marginBottom: 14,
+    backgroundColor: colors.paper,
+    borderWidth: 2, borderColor: colors.blackAlpha08,
+    borderRadius: radii.md,
+    paddingHorizontal: 16, paddingVertical: 14,
+    fontFamily: fonts.body, fontSize: 15, fontWeight: '500',
+    color: colors.ink,
   },
+
   errorBox: {
-    backgroundColor: 'rgba(251,113,133,0.10)',
-    borderWidth: 1,
-    borderColor: 'rgba(251,113,133,0.38)',
-    borderRadius: 14,
-    padding: 12,
-    marginBottom: 14,
+    flexDirection: 'row-reverse', alignItems: 'flex-start', gap: 10,
+    paddingHorizontal: 14, paddingVertical: 12,
+    backgroundColor: 'rgba(214,58,45,0.08)',
+    borderWidth: 1, borderColor: 'rgba(214,58,45,0.25)',
+    borderRadius: radii.sm,
   },
-  errorText: {
-    color: 'rgba(255,230,236,0.95)',
-    fontSize: 13,
-    textAlign: 'right',
+  errorIcon: {
+    width: 20, height: 20, borderRadius: 10,
+    backgroundColor: colors.bad,
+    alignItems: 'center', justifyContent: 'center',
   },
-  button: {
-    backgroundColor: 'rgba(34,211,238,0.22)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.16)',
-    borderRadius: 18,
-    padding: 16,
-    alignItems: 'center',
-    marginBottom: 20,
+  errorIconText: { color: '#fff', fontWeight: '900', fontSize: 12 },
+  errorText: { color: colors.bad, fontSize: 14, flex: 1, textAlign: 'right' },
+
+  // Submit (lift shadow כמו באתר)
+  submit: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 10,
+    backgroundColor: colors.ink,
+    paddingVertical: 16, paddingHorizontal: 22,
+    borderRadius: radii.pill,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1, shadowRadius: 0,
+    elevation: 5,
   },
-  buttonText: {
-    color: '#eaf0ff',
-    fontSize: 16,
-    fontWeight: '900',
-  },
-  link: {
-    color: 'rgba(234,240,255,0.62)',
-    fontSize: 14,
-    textAlign: 'center',
-  },
-  linkBold: {
-    color: '#22d3ee',
-    fontWeight: '700',
-  },
+  submitText: { color: colors.paper, fontFamily: fonts.display, fontSize: 17, fontWeight: '700' },
+  submitArrow: { color: colors.paper, fontSize: 20, fontWeight: '700' },
+
+  // "או" divider
+  divider: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  dividerLine: { flex: 1, height: 1, backgroundColor: 'rgba(20,18,26,0.1)' },
+  dividerText: { fontFamily: fonts.num, color: colors.inkMute, fontSize: 13 },
+
+  footerText: { fontSize: 14, color: colors.ink3, textAlign: 'center' },
+  link: { color: colors.ink, fontWeight: '700' },
 });
