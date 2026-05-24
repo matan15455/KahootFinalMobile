@@ -1,139 +1,126 @@
 // ===================================================================
-// app/main/_layout.js — תפריט תחתון מותאם בסגנון EduPlay
-// בר כהה צף עם פינות מעוגלות, אייקונים lime על active,
-// כפתור פלוס סגול גדול ובולט במרכז ("צור חידון")
+// app/main/_layout.js — EduPlay EpTabBar
+// מוסיף טאב סטטיסטיקות + href:null ל-session
 // ===================================================================
 import { Tabs } from 'expo-router';
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { colors, fonts, radii } from '../../constants/theme';
 
+/* ── 5 טאבים ── */
 const TAB_ITEMS = [
-  { name: 'my-quizzes', label: 'החידונים', icon: 'library-outline'    },
-  { name: 'join-room',  label: 'הצטרף',   icon: 'enter-outline'      },
-  { name: 'create-quiz', label: 'צור',     icon: 'add',  big: true   },
-  { name: 'profile',    label: 'פרופיל',  icon: 'person-outline'     },
+  { name: 'my-quizzes',  label: 'חידונים', icon: '🃏' },
+  { name: 'create-quiz', label: 'צור',     icon: '+',  big: true },
+  { name: 'join-room',   label: 'הצטרף',   icon: '▶' },
+  { name: 'statistics',  label: 'סטטיסטיקות', icon: '📊' },
+  { name: 'profile',     label: 'אישי',    icon: '👤' },
 ];
 
-// ─── רכיב Tab Bar מותאם ───────────────────────────────────
-function EpTabBar({ state, navigation }) {
+/* ── EpTabBar ── */
+function EpTabBar({ state, descriptors, navigation }) {
   return (
-    <View pointerEvents="box-none" style={tabStyles.wrap}>
-      <View style={tabStyles.bar}>
-        {TAB_ITEMS.map((item) => {
-          // index של הroute הזה בתוך state.routes
-          const routeIndex = state.routes.findIndex(r => r.name === item.name);
-          const isActive = state.index === routeIndex;
+    <View style={tb.wrap}>
+      <View style={tb.bar}>
+        {state.routes
+          .filter(r => !['create-room', 'create-manual', 'create-ai', 'session'].includes(r.name))
+          .map((route) => {
+            const meta        = TAB_ITEMS.find(t => t.name === route.name);
+            if (!meta) return null;
+            const isFocused   = state.index === state.routes.indexOf(route);
+            const onPress     = () => {
+              const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+              if (!isFocused && !event.defaultPrevented) navigation.navigate(route.name);
+            };
 
-          const onPress = () => {
-            if (routeIndex < 0) return;
-            navigation.navigate(item.name);
-          };
+            if (meta.big) {
+              return (
+                <TouchableOpacity key={route.name} style={tb.bigBtnWrap} onPress={onPress} activeOpacity={0.8}>
+                  <View style={tb.bigBtn}>
+                    <Text style={tb.bigBtnText}>{meta.icon}</Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            }
 
-          // ── הכפתור הגדול במרכז (create) ──
-          if (item.big) {
             return (
-              <TouchableOpacity
-                key={item.name}
-                onPress={onPress}
-                activeOpacity={0.85}
-                style={tabStyles.bigBtn}
-              >
-                <Ionicons name={item.icon} size={28} color="#fff"/>
+              <TouchableOpacity key={route.name} style={tb.item} onPress={onPress} activeOpacity={0.75}>
+                <Text style={[tb.icon, isFocused && tb.iconActive]}>{meta.icon}</Text>
+                <Text style={[tb.label, isFocused && tb.labelActive]}>{meta.label}</Text>
+                {isFocused && <View style={tb.dot} />}
               </TouchableOpacity>
             );
-          }
-
-          // ── tab רגיל ──
-          return (
-            <TouchableOpacity
-              key={item.name}
-              onPress={onPress}
-              activeOpacity={0.7}
-              style={tabStyles.tab}
-            >
-              <Ionicons
-                name={item.icon}
-                size={22}
-                color={isActive ? colors.ans3 : 'rgba(255,255,255,0.55)'}
-              />
-              <Text style={[
-                tabStyles.label,
-                { color: isActive ? colors.ans3 : 'rgba(255,255,255,0.55)' },
-              ]}>
-                {item.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
+          })}
       </View>
     </View>
   );
 }
 
+/* ── Layout ── */
 export default function MainLayout() {
   return (
-    <Tabs
-      screenOptions={{ headerShown: false }}
-      tabBar={(props) => <EpTabBar {...props}/>}
-    >
-      <Tabs.Screen name="my-quizzes"/>
-      <Tabs.Screen name="join-room"/>
-      <Tabs.Screen name="create-quiz"/>
-      <Tabs.Screen name="profile"/>
-
-      {/* מסכים מוסתרים — לא מופיעים ב-tab bar */}
-      <Tabs.Screen name="create-manual" options={{ href: null }}/>
-      <Tabs.Screen name="create-ai"     options={{ href: null }}/>
-      <Tabs.Screen name="create-room"   options={{ href: null }}/>
+    <Tabs tabBar={(props) => <EpTabBar {...props} />} screenOptions={{ headerShown: false }}>
+      <Tabs.Screen name="my-quizzes"  />
+      <Tabs.Screen name="join-room"   />
+      <Tabs.Screen name="create-quiz" />
+      <Tabs.Screen name="create-room" options={{ href: null }} />
+      <Tabs.Screen name="create-manual" options={{ href: null }} />
+      <Tabs.Screen name="create-ai"   options={{ href: null }} />
+      <Tabs.Screen name="statistics"  />
+      <Tabs.Screen name="session"     options={{ href: null }} />
+      <Tabs.Screen name="profile"     />
     </Tabs>
   );
 }
 
-const tabStyles = StyleSheet.create({
-  // קונטיינר חיצוני — צף מעל המסך
+/* ── Styles ── */
+const tb = StyleSheet.create({
   wrap: {
     position: 'absolute',
-    left: 0, right: 0, bottom: Platform.OS === 'ios' ? 28 : 16,
-    paddingHorizontal: 14,
-  },
-  // הבר עצמו
-  bar: {
-    backgroundColor: colors.ink,
-    borderRadius: 26,
-    flexDirection: 'row-reverse',
-    justifyContent: 'space-around',
+    bottom: 0, left: 0, right: 0,
     alignItems: 'center',
+    paddingBottom: Platform.OS === 'ios' ? 20 : 10,
+  },
+  bar: {
+    flexDirection: 'row',
+    backgroundColor: colors.paper,
+    borderRadius: radii.pill,
+    paddingHorizontal: 10,
     paddingVertical: 10,
-    paddingHorizontal: 14,
-    minHeight: 64,
+    gap: 4,
     shadowColor: colors.ink,
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.18,
-    shadowRadius: 16,
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
     elevation: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(20,18,26,0.06)',
   },
-  tab: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 4, paddingHorizontal: 10,
-    gap: 2,
+
+  item: {
+    flex: 1, alignItems: 'center', justifyContent: 'center',
+    gap: 3, paddingVertical: 6, paddingHorizontal: 6,
+    borderRadius: radii.lg, position: 'relative',
   },
+  icon: { fontSize: 20, opacity: 0.4 },
+  iconActive: { opacity: 1 },
   label: {
-    fontFamily: fonts.body,
-    fontSize: 10,
-    fontWeight: '600',
+    fontFamily: fonts.num, fontSize: 10, fontWeight: '600',
+    color: colors.inkMute, letterSpacing: 0.3,
   },
-  // כפתור פלוס סגול גדול במרכז
+  labelActive: { color: colors.ink, fontWeight: '700' },
+  dot: {
+    position: 'absolute', bottom: 2,
+    width: 4, height: 4, borderRadius: 2,
+    backgroundColor: colors.primary,
+  },
+
+  bigBtnWrap: { alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
   bigBtn: {
-    width: 50, height: 50, borderRadius: 16,
+    width: 52, height: 52, borderRadius: radii.pill,
     backgroundColor: colors.primary,
     alignItems: 'center', justifyContent: 'center',
-    transform: [{ translateY: -14 }],
     shadowColor: colors.primaryDeep,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 1, shadowRadius: 0,
-    elevation: 8,
+    shadowOpacity: 1, shadowRadius: 0, elevation: 6,
   },
+  bigBtnText: { fontSize: 28, color: '#fff', lineHeight: 34, fontWeight: '900' },
 });
