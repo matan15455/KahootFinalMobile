@@ -1,167 +1,185 @@
+// ===================================================================
+// components/ScoreBoard.js — EduPlay design
+// תואם לעיצוב של האתר: רקע cream/paper, ink text, podium עם
+// צבעי ans, שאר השחקנים ברשימה נקייה
+// ===================================================================
 import { View, Text, StyleSheet, FlatList } from 'react-native';
+import { colors, fonts, radii } from '../constants/theme';
+import { EpShape } from './EpBrand';
+
+const PODIUM = [
+  { medal: '👑', shape: 'burst', bg: '#FFF0CC', border: 'rgba(229,156,0,0.35)', height: 100, textColor: '#7A5600' },
+  { medal: '🥈', shape: 'hex',   bg: '#F0F0F0', border: 'rgba(140,140,140,0.3)', height: 80,  textColor: '#555'    },
+  { medal: '🥉', shape: 'wave',  bg: '#FFE8DC', border: 'rgba(180,83,9,0.3)',    height: 68,  textColor: '#7A3A0A' },
+];
 
 export default function ScoreBoard({ players = [] }) {
   const sorted = [...players].sort((a, b) => b.score - a.score);
-  const top3 = sorted.slice(0, 3);
-  const rest = sorted.slice(3);
-
-  const medals = ['👑', '🥈', '🥉'];
-  const podiumColors = [
-    'rgba(251,191,36,0.25)',
-    'rgba(156,163,175,0.2)',
-    'rgba(180,83,9,0.2)',
-  ];
-  const podiumBorders = [
-    'rgba(251,191,36,0.5)',
-    'rgba(156,163,175,0.35)',
-    'rgba(180,83,9,0.4)',
-  ];
+  const top3   = sorted.slice(0, 3);
+  const rest   = sorted.slice(3);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>🏆 ניקוד</Text>
+    <View style={s.container}>
+      <Text style={s.title}>לוח תוצאות</Text>
 
-      {/* Podium */}
-      <View style={styles.podium}>
-        {/* מקום שני - שמאל */}
-        {top3[1] && (
-          <View style={[styles.podiumCard, styles.podiumSecond,
-            { backgroundColor: podiumColors[1], borderColor: podiumBorders[1] }]}>
-            <Text style={styles.podiumMedal}>{medals[1]}</Text>
-            <Text style={styles.podiumName} numberOfLines={1}>{top3[1].nickname}</Text>
-            <Text style={styles.podiumScore}>{top3[1].score}</Text>
-          </View>
-        )}
+      {/* ── Podium ── */}
+      {top3.length > 0 && (
+        <View style={s.podium}>
+          {/* 2nd — left */}
+          {top3[1] ? (
+            <PodiumCard player={top3[1]} rank={1} />
+          ) : <View style={{ flex: 1 }} />}
 
-        {/* מקום ראשון - מרכז */}
-        {top3[0] && (
-          <View style={[styles.podiumCard, styles.podiumFirst,
-            { backgroundColor: podiumColors[0], borderColor: podiumBorders[0] }]}>
-            <Text style={styles.podiumMedal}>{medals[0]}</Text>
-            <Text style={styles.podiumName} numberOfLines={1}>{top3[0].nickname}</Text>
-            <Text style={styles.podiumScore}>{top3[0].score}</Text>
-          </View>
-        )}
+          {/* 1st — center (taller) */}
+          {top3[0] && <PodiumCard player={top3[0]} rank={0} center />}
 
-        {/* מקום שלישי - ימין */}
-        {top3[2] && (
-          <View style={[styles.podiumCard, styles.podiumThird,
-            { backgroundColor: podiumColors[2], borderColor: podiumBorders[2] }]}>
-            <Text style={styles.podiumMedal}>{medals[2]}</Text>
-            <Text style={styles.podiumName} numberOfLines={1}>{top3[2].nickname}</Text>
-            <Text style={styles.podiumScore}>{top3[2].score}</Text>
-          </View>
-        )}
-      </View>
+          {/* 3rd — right */}
+          {top3[2] ? (
+            <PodiumCard player={top3[2]} rank={2} />
+          ) : <View style={{ flex: 1 }} />}
+        </View>
+      )}
 
-      {/* שאר השחקנים */}
+      {/* ── Rest ── */}
       {rest.length > 0 && (
-        <FlatList
-          data={rest}
-          keyExtractor={(p, i) => p.userId || String(i)}
-          scrollEnabled={false}
-          contentContainerStyle={styles.restList}
-          renderItem={({ item, index }) => (
-            <View style={styles.restItem}>
-              <Text style={styles.restRank}>#{index + 4}</Text>
-              <Text style={styles.restName} numberOfLines={1}>{item.nickname}</Text>
-              <Text style={styles.restScore}>{item.score}</Text>
+        <View style={s.restWrap}>
+          {rest.map((p, i) => (
+            <View key={p.userId || i} style={s.restRow}>
+              <Text style={s.restRank}>#{i + 4}</Text>
+              <Text style={s.restName} numberOfLines={1}>{p.nickname}</Text>
+              <View style={s.restScoreBadge}>
+                <Text style={s.restScore}>{p.score}</Text>
+              </View>
             </View>
-          )}
-        />
+          ))}
+        </View>
       )}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    width: '100%',
-    paddingHorizontal: 4,
-  },
+function PodiumCard({ player, rank, center }) {
+  const meta = PODIUM[rank];
+  return (
+    <View style={[s.podiumCard, center && s.podiumCenter, { backgroundColor: meta.bg, borderColor: meta.border }]}>
+      {/* צורה דקורטיבית ברקע */}
+      <View style={s.podiumBgShape}>
+        <EpShape kind={meta.shape} color={meta.border} size={center ? 90 : 70} />
+      </View>
+
+      <Text style={s.podiumMedal}>{meta.medal}</Text>
+      <Text style={[s.podiumName, { color: meta.textColor }]} numberOfLines={1}>
+        {player.nickname}
+      </Text>
+      <Text style={[s.podiumScore, { color: meta.textColor }]}>
+        {player.score}
+      </Text>
+    </View>
+  );
+}
+
+const s = StyleSheet.create({
+  container: { width: '100%' },
+
   title: {
-    color: '#eaf0ff',
-    fontSize: 24,
-    fontWeight: '900',
+    fontFamily: fonts.display,
+    fontWeight: '800',
+    fontSize: 22,
+    letterSpacing: -0.5,
+    color: colors.ink,
     textAlign: 'center',
     marginBottom: 20,
   },
 
-  // Podium
+  // ── Podium ──
   podium: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'flex-end',
-    gap: 10,
-    marginBottom: 20,
-    paddingHorizontal: 10,
+    gap: 8,
+    marginBottom: 16,
   },
   podiumCard: {
-    borderRadius: 18,
-    borderWidth: 1,
-    alignItems: 'center',
-    padding: 14,
     flex: 1,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    padding: 12,
+    alignItems: 'center',
+    overflow: 'hidden',
+    position: 'relative',
+    minHeight: 90,
+    justifyContent: 'flex-end',
   },
-  podiumFirst: {
-    paddingTop: 20,
-    paddingBottom: 20,
+  podiumCenter: {
+    minHeight: 116,
+    borderRadius: radii.lg,
   },
-  podiumSecond: {
-    paddingTop: 10,
-    paddingBottom: 14,
-  },
-  podiumThird: {
-    paddingTop: 10,
-    paddingBottom: 14,
+  podiumBgShape: {
+    position: 'absolute',
+    bottom: -16,
+    left: -12,
+    opacity: 0.25,
   },
   podiumMedal: {
-    fontSize: 28,
-    marginBottom: 8,
-  },
-  podiumName: {
-    color: '#eaf0ff',
-    fontSize: 13,
-    fontWeight: '800',
-    textAlign: 'center',
+    fontSize: 22,
     marginBottom: 6,
   },
+  podiumName: {
+    fontFamily: fonts.display,
+    fontWeight: '700',
+    fontSize: 12,
+    textAlign: 'center',
+    marginBottom: 4,
+  },
   podiumScore: {
-    color: '#22d3ee',
-    fontSize: 18,
-    fontWeight: '900',
+    fontFamily: fonts.num,
+    fontWeight: '700',
+    fontSize: 16,
   },
 
-  // Rest
-  restList: { gap: 8, width: '100%' },
-  restItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 14,
-    padding: 14,
+  // ── Rest ──
+  restWrap: {
+    backgroundColor: colors.paper,
+    borderRadius: radii.lg,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: 'rgba(20,18,26,0.06)',
+    overflow: 'hidden',
+  },
+  restRow: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
     gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(20,18,26,0.05)',
   },
   restRank: {
-    color: 'rgba(234,240,255,0.4)',
-    fontSize: 14,
+    fontFamily: fonts.num,
+    fontSize: 13,
     fontWeight: '700',
-    width: 30,
+    color: colors.inkMute,
+    width: 28,
+    textAlign: 'right',
   },
   restName: {
     flex: 1,
-    color: '#eaf0ff',
-    fontSize: 15,
+    fontFamily: fonts.body,
+    fontSize: 14,
     fontWeight: '600',
+    color: colors.ink,
     textAlign: 'right',
   },
+  restScoreBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    backgroundColor: colors.primarySoft,
+    borderRadius: radii.pill,
+  },
   restScore: {
-    color: '#22d3ee',
-    fontSize: 16,
-    fontWeight: '800',
-    minWidth: 40,
-    textAlign: 'right',
+    fontFamily: fonts.num,
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.primary,
   },
 });

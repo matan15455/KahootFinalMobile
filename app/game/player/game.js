@@ -1,32 +1,71 @@
-import React, { useState, useEffect, useRef } from 'react';
+// ===================================================================
+// app/game/player/game.js — EduPlay design
+// תואם 1:1 ל-PlayerGame.jsx של האתר
+// phases: LOADING / QUESTION / SUMMARY / SCORES / END
+// עיצוב: cream/paper רקע, ANSWER_META tiles, verdict card, waiting pill
+// ===================================================================
+import { useState, useEffect, useRef } from 'react';
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-  ScrollView,
-  Dimensions,
+  View, Text, TouchableOpacity, StyleSheet,
+  ActivityIndicator, ScrollView, Dimensions,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { getSocket } from '../../../utils/socket';
+import { colors, fonts, radii } from '../../../constants/theme';
+import { EpShape, ANSWER_META } from '../../../components/EpBrand';
 import ScoreBoard from '../../../components/ScoreBoard';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
 
-// צבעים בסגנון Kahoot
-const ANSWER_COLORS = ['#e21b3c', '#1368ce', '#d89e00', '#26890c'];
+/* ─────────────────────────────────────────────────────────
+   Timer — קטן יותר מ-host, כמו .ep-pg__timer
+───────────────────────────────────────────────────────── */
+function TimerRing({ timeLeft, totalTime, size = 56 }) {
+  const isDanger  = timeLeft !== null && timeLeft <= 5;
+  const isWarning = timeLeft !== null && timeLeft > 5 && timeLeft <= 10;
+  const progress  = totalTime > 0 ? timeLeft / totalTime : 0;
 
+  const strokeColor = isDanger  ? colors.bad
+                    : isWarning ? colors.warn
+                    : colors.ink;
+
+  return (
+    <View style={[tr.wrap, { width: size, height: size }]}>
+      <View style={[tr.bgRing, {
+        width: size, height: size, borderRadius: size / 2,
+        borderWidth: size * 0.08, borderColor: 'rgba(20,18,26,0.1)',
+      }]} />
+      <View style={[tr.progressRing, {
+        width: size, height: size, borderRadius: size / 2,
+        borderWidth: size * 0.08, borderColor: strokeColor,
+        opacity: Math.max(0.15, progress),
+      }]} />
+      <Text style={[tr.num, { color: strokeColor, fontSize: size * 0.35 }]}>
+        {timeLeft}
+      </Text>
+    </View>
+  );
+}
+
+const tr = StyleSheet.create({
+  wrap: { alignItems: 'center', justifyContent: 'center', position: 'relative' },
+  bgRing: { position: 'absolute', backgroundColor: 'transparent' },
+  progressRing: { position: 'absolute', backgroundColor: 'transparent' },
+  num: { fontFamily: fonts.num, fontWeight: '700' },
+});
+
+/* ─────────────────────────────────────────────────────────
+   מסך ראשי
+───────────────────────────────────────────────────────── */
 export default function PlayerGame() {
-  const [room, setRoom] = useState(null);
+  const [room,           setRoom]           = useState(null);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
-  const [timeLeft, setTimeLeft] = useState(null);
+  const [timeLeft,       setTimeLeft]       = useState(null);
+  const [earned,         setEarned]         = useState(null);
 
-  const router = useRouter();
+  const router     = useRouter();
   const { roomId } = useLocalSearchParams();
-  const timerRef = useRef(null);
+  const timerRef   = useRef(null);
 
   useEffect(() => {
     const socket = getSocket();
@@ -34,17 +73,16 @@ export default function PlayerGame() {
 
     const handleRoomUpdated = (roomData) => {
       if (roomData.roomId !== roomId) return;
-
       setRoom(roomData);
 
       if (roomData.phase === 'QUESTION') {
         setSelectedAnswer(null);
+        setEarned(null);
       }
 
       if (roomData.endsAt) {
         clearInterval(timerRef.current);
-
-        const offset = Date.now() - roomData.serverTime;
+        const offset          = Date.now() - roomData.serverTime;
         const correctedEndsAt = roomData.endsAt + offset;
 
         const update = () => {
@@ -60,11 +98,15 @@ export default function PlayerGame() {
       }
     };
 
-    socket.on('roomUpdated', handleRoomUpdated);
+    const handleScoreEarned = ({ earned }) => setEarned(earned);
+
+    socket.on('roomUpdated',  handleRoomUpdated);
+    socket.on('scoreEarned',  handleScoreEarned);
     socket.emit('requestRoomState', { roomId });
 
     return () => {
-      socket.off('roomUpdated', handleRoomUpdated);
+      socket.off('roomUpdated',  handleRoomUpdated);
+      socket.off('scoreEarned',  handleScoreEarned);
       clearInterval(timerRef.current);
     };
   }, [roomId]);
@@ -73,421 +115,395 @@ export default function PlayerGame() {
     const socket = getSocket();
     if (!socket || !room || room.phase !== 'QUESTION') return;
     if (selectedAnswer) return;
-
     setSelectedAnswer(answerText);
     socket.emit('answerQuestion', { roomId, answerText });
   };
 
-  /* =====================================================
-     UI Guards (Loading)
-  ===================================================== */
+  /* ── Loading ── */
   if (!room) {
     return (
-      <View style={styles.container}>
-        <LinearGradient colors={['#0f172a', '#070815']} style={StyleSheet.absoluteFill} />
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#22d3ee" />
-          <Text style={styles.loadingText}>טוען משחק…</Text>
-        </View>
+      <View style={[s.container, s.centered]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={s.loaderText}>טוען משחק…</Text>
       </View>
     );
   }
 
-  /* =====================================================
+  /* ══════════════════════════════
      END
-  ===================================================== */
+  ══════════════════════════════ */
   if (room.phase === 'END') {
     return (
-      <View style={styles.container}>
-        <LinearGradient colors={['#0f172a', '#070815']} style={StyleSheet.absoluteFill} />
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          <View style={styles.glassPanel}>
-            <Text style={styles.titleGlow}>🏁 המשחק הסתיים!</Text>
-            <View style={styles.tableWrapper}>
-                <ScoreBoard players={room.players} />
-            </View>
-            <TouchableOpacity style={styles.actionBtn} onPress={() => router.replace('/main/join-room')}>
-              <LinearGradient colors={['#8b5cf6', '#6d28d9']} style={styles.btnGradient}>
-                <Text style={styles.actionBtnText}>חזור לדף הבית</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </View>
+      <ScrollView style={s.container} contentContainerStyle={s.scrollContent}>
+        <View style={s.heroSection}>
+          <Text style={s.kicker}>סוף החידון</Text>
+          <Text style={s.heroTitle}>
+            כל הכבוד!{'\n'}
+            <Text style={{ color: colors.primary }}>הנה התוצאות.</Text>
+          </Text>
+        </View>
+        <ScoreBoard players={room.players} />
+        <TouchableOpacity
+          style={[s.waitPill, { marginTop: 24, alignSelf: 'center' }]}
+          onPress={() => router.replace('/main/join-room')}
+        >
+          <Text style={s.waitPillText}>חזרה לדף הבית</Text>
+        </TouchableOpacity>
+      </ScrollView>
     );
   }
 
-  /* =====================================================
-     SUMMARY (תוצאות אישיות)
-  ===================================================== */
+  /* ══════════════════════════════
+     SUMMARY — תוצאה אישית + פירוט
+  ══════════════════════════════ */
   if (room.phase === 'SUMMARY' && room.summary) {
-    const isCorrect = selectedAnswer === room.summary.correctAnswer;
-    const isTimeout = !selectedAnswer;
+    const entries      = Object.entries(room.summary.answersCount);
+    const totalAnswers = entries.reduce((sum, [, c]) => sum + c, 0);
+    const maxCount     = Math.max(...entries.map(([, c]) => c), 1);
+
+    const wasCorrect = selectedAnswer && selectedAnswer === room.summary.correctAnswer;
+    const wasWrong   = selectedAnswer && selectedAnswer !== room.summary.correctAnswer;
 
     return (
-      <View style={styles.container}>
-        <LinearGradient colors={['#0f172a', '#070815']} style={StyleSheet.absoluteFill} />
-        <View style={[styles.glassPanel, { flex: 1, marginTop: 40, marginBottom: 20 }]}>
-          
-          <Text style={styles.titleGlow}>תוצאות</Text>
+      <ScrollView style={s.container} contentContainerStyle={s.scrollContent}>
 
-          {/* חיווי מרכזי לשחקן */}
-          <View style={[
-              styles.feedbackCircle, 
-              isCorrect ? styles.feedbackCorrect : isTimeout ? styles.feedbackTimeout : styles.feedbackWrong
-          ]}>
-             <Ionicons 
-                name={isCorrect ? "checkmark-circle" : isTimeout ? "time" : "close-circle"} 
-                size={80} 
-                color="#fff" 
-             />
-             <Text style={styles.feedbackText}>
-                {isCorrect ? 'כל הכבוד!' : isTimeout ? 'זמן עבר!' : 'לא נורא...'}
-             </Text>
-          </View>
-
-          <View style={styles.resultDetails}>
-            <Text style={styles.resultDetailsLabel}>התשובה הנכונה הייתה:</Text>
-            <Text style={styles.resultDetailsCorrectText}>{room.summary.correctAnswer}</Text>
-          </View>
-
-           <Text style={styles.waitingText}>ממתינים למארח...</Text>
+        {/* Verdict card — כמו .ep-pg__verdict */}
+        <View style={[
+          s.verdict,
+          wasCorrect ? s.verdictCorrect : wasWrong ? s.verdictWrong : s.verdictNeutral,
+        ]}>
+          <Text style={s.verdictLabel}>
+            {wasCorrect ? 'תשובה נכונה!' : wasWrong ? 'תשובה שגויה' : 'לא ענית בזמן'}
+          </Text>
+          <Text style={s.verdictSub}>
+            {wasCorrect && (
+              <>
+                מהיר ומדויק. ✦
+                {earned !== null ? `  +${earned} נק'` : ''}
+              </>
+            )}
+            {wasWrong   && `התשובה הנכונה: ${room.summary.correctAnswer}`}
+            {!selectedAnswer && `התשובה הנכונה: ${room.summary.correctAnswer}`}
+          </Text>
         </View>
-      </View>
+
+        {/* פירוט — כמו .ep-pg__sum-wrap */}
+        <View style={s.sumWrap}>
+          <Text style={s.sumLabel}>איך הצביעו אחרים</Text>
+          {entries.map(([answer, count], idx) => {
+            const meta      = ANSWER_META[idx % ANSWER_META.length];
+            const isCorrect = room.summary.correctAnswer === answer;
+            const isMine    = selectedAnswer === answer;
+            const pct       = totalAnswers ? (count / totalAnswers) * 100 : 0;
+            const barPct    = (count / maxCount) * 100;
+
+            return (
+              <View key={answer} style={[
+                s.sumRow,
+                isCorrect ? s.sumRowCorrect : isMine && !isCorrect ? s.sumRowWrong : null,
+              ]}>
+                <View style={[s.sumTag, { backgroundColor: meta.color }]}>
+                  <Text style={[s.sumTagText, { color: meta.textOn || '#fff' }]}>{meta.letter}</Text>
+                </View>
+                <View style={s.sumBody}>
+                  <View style={s.sumHead}>
+                    <View style={{ flexDirection: 'row-reverse', alignItems: 'center', gap: 6, flex: 1 }}>
+                      <Text style={s.sumText} numberOfLines={2}>{answer}</Text>
+                      {isCorrect && (
+                        <View style={s.badgeOk}><Text style={s.badgeOkText}>✓ נכון</Text></View>
+                      )}
+                      {isMine && (
+                        <View style={s.badgeMine}><Text style={s.badgeMineText}>הבחירה שלך</Text></View>
+                      )}
+                    </View>
+                    <View style={s.sumCountWrap}>
+                      <Text style={s.sumCount}>{count}</Text>
+                      <Text style={s.sumPct}> · {Math.round(pct)}%</Text>
+                    </View>
+                  </View>
+                  <View style={s.barTrack}>
+                    <View style={[s.barFill, { width: `${barPct}%`, backgroundColor: meta.color }]} />
+                  </View>
+                </View>
+              </View>
+            );
+          })}
+        </View>
+
+        {/* waiting pill */}
+        <View style={[s.waitPill, { alignSelf: 'center' }]}>
+          <View style={s.pulseDot} />
+          <Text style={s.waitPillText}>ממתינים שהמנחה ימשיך…</Text>
+        </View>
+      </ScrollView>
     );
   }
 
-  /* =====================================================
-     SCORES
-  ===================================================== */
+  /* ══════════════════════════════
+     SCORES — לוח ניקוד
+  ══════════════════════════════ */
   if (room.phase === 'SCORES') {
     return (
-      <View style={styles.container}>
-        <LinearGradient colors={['#0f172a', '#070815']} style={StyleSheet.absoluteFill} />
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          <View style={styles.glassPanel}>
-             <Text style={styles.titleGlow}>טבלת מובילים 🏆</Text>
-             <View style={styles.tableWrapper}>
-                <ScoreBoard players={room.players} />
-             </View>
-             <View style={styles.loadingFooter}>
-                <ActivityIndicator size="small" color="#22d3ee" />
-                <Text style={[styles.waitingText, {marginTop: 0, marginLeft: 10}]}>ממתינים לשאלה הבאה…</Text>
-             </View>
-          </View>
-        </ScrollView>
-      </View>
+      <ScrollView style={s.container} contentContainerStyle={s.scrollContent}>
+        <View style={s.topSection}>
+          <Text style={s.kicker}>לוח ניקוד</Text>
+          <Text style={s.sectionTitle}>המצב הנוכחי</Text>
+        </View>
+        <ScoreBoard players={room.players} />
+        <View style={[s.waitPill, { alignSelf: 'center', marginTop: 20 }]}>
+          <View style={s.pulseDot} />
+          <Text style={s.waitPillText}>ממתינים שהמנחה ימשיך…</Text>
+        </View>
+      </ScrollView>
     );
   }
 
-  /* =====================================================
+  /* ══════════════════════════════
      QUESTION
-  ===================================================== */
+  ══════════════════════════════ */
   if (room.phase === 'QUESTION' && room.question) {
-    const isDanger = timeLeft !== null && timeLeft <= 5;
-    const isWarning = timeLeft !== null && timeLeft <= 10 && timeLeft > 5;
+    const totalQ = room.questions?.length || room.question.totalQuestions;
 
     return (
-      <View style={styles.container}>
-        <LinearGradient colors={['#0f172a', '#070815']} style={StyleSheet.absoluteFill} />
-        
-        <View style={styles.gameHeader}>
-          <View style={styles.questionBadge}>
-            <Text style={styles.questionBadgeText}>שאלה {room.questionIndex + 1}</Text>
+      <View style={[s.container, s.qFull]}>
+
+        {/* ── ראש: chip + timer ── */}
+        <View style={s.qhead}>
+          <View style={s.chip}>
+            <Text style={s.chipText}>
+              שאלה {room.questionIndex + 1}
+              {totalQ ? ` · מתוך ${totalQ}` : ''}
+            </Text>
           </View>
-          
           {timeLeft !== null && (
-            <View style={[
-              styles.megaTimer, 
-              isDanger && styles.timerDanger, 
-              isWarning && styles.timerWarning
-            ]}>
-              <Text style={[
-                styles.timerNumber, 
-                isDanger && { color: '#ef4444' },
-                isWarning && { color: '#f59e0b' }
-              ]}>{timeLeft}</Text>
-            </View>
+            <TimerRing
+              timeLeft={timeLeft}
+              totalTime={room.question.time}
+              size={56}
+            />
           )}
         </View>
 
-        <View style={styles.questionCard}>
-          <Text style={styles.mainQuestionText}>{room.question.text}</Text>
+        {/* ── hint card ── */}
+        <View style={s.hintCard}>
+          <Text style={s.hintLabel}>
+            {selectedAnswer ? 'תשובתך נשלחה' : 'בחרו תשובה'}
+          </Text>
+          {selectedAnswer && (
+            <Text style={s.hintSub}>המתינו שהמנחה יסיים את השאלה</Text>
+          )}
         </View>
 
-        {selectedAnswer ? (
-          <View style={styles.waitingForOthersContainer}>
-            <Ionicons name="checkmark-done-circle" size={60} color="#22d3ee" />
-            <Text style={styles.waitingForOthersText}>התשובה נקלטה!</Text>
-            <Text style={styles.waitingSubText}>ממתינים לשאר השחקנים...</Text>
-          </View>
-        ) : (
-          <View style={styles.answersGrid}>
-            {room.question.answers.map((ans, idx) => (
-              <TouchableOpacity 
+        {/* ── 4 כפתורי תשובה ── */}
+        <View style={s.answersGrid}>
+          {room.question.answers.map((ans, idx) => {
+            const meta       = ANSWER_META[idx % ANSWER_META.length];
+            const isSelected = selectedAnswer === ans.text;
+            const isDimmed   = selectedAnswer && !isSelected;
+
+            return (
+              <TouchableOpacity
+                key={idx}
                 activeOpacity={0.8}
-                key={idx} 
-                style={[styles.answerCard, { backgroundColor: ANSWER_COLORS[idx % ANSWER_COLORS.length] }]}
+                style={[
+                  s.answerBtn,
+                  { backgroundColor: meta.color, shadowColor: meta.inkColor },
+                  isSelected && s.answerBtnSelected,
+                  isDimmed   && s.answerBtnDimmed,
+                ]}
                 onPress={() => handleAnswer(ans.text)}
+                disabled={!!selectedAnswer}
               >
-                <Text style={styles.answerText}>{ans.text}</Text>
+                <View style={s.answerBtnTop}>
+                  <Text style={[s.answerLetter, { color: meta.textOn || '#fff' }]}>
+                    {meta.letter}
+                  </Text>
+                  <EpShape kind={meta.shape} size={22} color={meta.textOn || '#fff'} />
+                </View>
+                <Text style={[s.answerText, { color: meta.textOn || '#fff' }]}>
+                  {ans.text}
+                </Text>
               </TouchableOpacity>
-            ))}
-          </View>
-        )}
+            );
+          })}
+        </View>
       </View>
     );
   }
 
-  /* =====================================================
-     LOBBY / FALLBACK
-  ===================================================== */
+  /* ── Fallback ── */
   return (
-    <View style={styles.container}>
-      <LinearGradient colors={['#0f172a', '#070815']} style={StyleSheet.absoluteFill} />
-      <View style={[styles.glassPanel, styles.centered, {marginHorizontal: 20}]}>
-        <Text style={styles.titleGlow}>⏳ תכף מתחילים...</Text>
-        <Text style={styles.subtitle}>הסתכלו על המסך של המארח</Text>
-      </View>
+    <View style={[s.container, s.centered]}>
+      <ActivityIndicator size="large" color={colors.primary} />
+      <Text style={s.loaderText}>מחכים שהמנחה יתחיל…</Text>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   container: {
-    flex: 1,
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    justifyContent: 'center',
+    flex: 1, backgroundColor: colors.cream, paddingTop: 60,
   },
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    paddingBottom: 40,
+  qFull: { flex: 1 },
+  centered: { alignItems: 'center', justifyContent: 'center' },
+  scrollContent: { paddingHorizontal: 16, paddingBottom: 60, gap: 16 },
+
+  loaderText: {
+    fontFamily: fonts.num, fontSize: 13, fontWeight: '500',
+    letterSpacing: 0.08, textTransform: 'uppercase',
+    color: colors.inkMute, marginTop: 16, textAlign: 'center',
   },
-  centered: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 250,
+
+  // ── Hero ──
+  heroSection: { alignItems: 'center', gap: 10 },
+  heroTitle: {
+    fontFamily: fonts.display, fontWeight: '800',
+    fontSize: 36, letterSpacing: -0.03, lineHeight: 40,
+    color: colors.ink, textAlign: 'center',
   },
-  glassPanel: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 24,
-    padding: 24,
-    alignItems: 'center',
-    width: '100%',
+  topSection: { gap: 6 },
+  kicker: {
+    fontFamily: fonts.num, fontSize: 12, fontWeight: '600',
+    letterSpacing: 0.08, textTransform: 'uppercase',
+    color: colors.inkMute, textAlign: 'right',
   },
-  titleGlow: {
-    color: '#fff',
-    fontSize: 28,
-    fontWeight: '900',
-    textAlign: 'center',
-    marginBottom: 20,
-    textShadowColor: 'rgba(34,211,238,0.5)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 10,
+  sectionTitle: {
+    fontFamily: fonts.display, fontWeight: '800',
+    fontSize: 28, letterSpacing: -0.025, color: colors.ink, textAlign: 'right',
   },
-  subtitle: {
-    color: 'rgba(234,240,255,0.7)',
-    fontSize: 16,
-    marginTop: 10,
+
+  // ── Verdict (SUMMARY) ──
+  verdict: {
+    padding: 22, borderRadius: radii.xl, gap: 8,
   },
-  loadingText: {
-    color: 'rgba(234,240,255,0.6)',
-    fontSize: 18,
-    marginTop: 16,
+  verdictCorrect: {
+    backgroundColor: colors.ans3,
+    shadowColor: colors.ans3Ink,
+    shadowOffset: { width: 0, height: 6 }, shadowOpacity: 1, shadowRadius: 0, elevation: 5,
   },
-  tableWrapper: {
-    width: '100%',
-    marginBottom: 20,
-    minHeight: 150,
+  verdictWrong: {
+    backgroundColor: colors.ans1,
+    shadowColor: colors.ans1Ink,
+    shadowOffset: { width: 0, height: 6 }, shadowOpacity: 1, shadowRadius: 0, elevation: 5,
   },
-  actionBtn: {
-    width: '80%',
-    borderRadius: 16,
-    overflow: 'hidden',
-    marginTop: 10,
-  },
-  btnGradient: {
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  actionBtnText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '800',
-  },
-  /* --- Feedback UI (SUMMARY) --- */
-  feedbackCircle: {
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 30,
-    elevation: 10,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 15,
-  },
-  feedbackCorrect: {
-    backgroundColor: '#34d399',
-    shadowColor: '#34d399',
-  },
-  feedbackWrong: {
-    backgroundColor: '#f87171',
-    shadowColor: '#f87171',
-  },
-  feedbackTimeout: {
-    backgroundColor: '#94a3b8',
-    shadowColor: '#94a3b8',
-  },
-  feedbackText: {
-    color: '#fff',
-    fontSize: 22,
-    fontWeight: '900',
-    marginTop: 10,
-  },
-  resultDetails: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    padding: 20,
-    borderRadius: 16,
-    width: '100%',
-    alignItems: 'center',
-  },
-  resultDetailsLabel: {
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 14,
-    marginBottom: 8,
-  },
-  resultDetailsCorrectText: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: '800',
-    textAlign: 'center',
-  },
-  loadingFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  waitingText: {
-    color: 'rgba(234,240,255,0.5)',
-    fontSize: 16,
-    marginTop: 20,
-  },
-  /* --- Question & Timer Styles --- */
-  gameHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-    width: '100%',
-  },
-  questionBadge: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  questionBadgeText: {
-    color: '#eaf0ff',
-    fontWeight: '700',
-  },
-  megaTimer: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    borderWidth: 4,
-    borderColor: '#22d3ee',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(34,211,238,0.1)',
-    shadowColor: '#22d3ee',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    elevation: 5,
-  },
-  timerWarning: {
-    borderColor: '#f59e0b',
-    backgroundColor: 'rgba(245,158,11,0.1)',
-    shadowColor: '#f59e0b',
-  },
-  timerDanger: {
-    borderColor: '#ef4444',
-    backgroundColor: 'rgba(239,68,68,0.1)',
-    shadowColor: '#ef4444',
-  },
-  timerNumber: {
-    color: '#fff',
-    fontSize: 28,
-    fontWeight: '900',
-  },
-  questionCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 20,
-    alignItems: 'center',
-    elevation: 4,
-    minHeight: 100,
-    justifyContent: 'center',
-  },
-  mainQuestionText: {
-    color: '#333',
-    fontSize: 20,
-    fontWeight: '800',
-    textAlign: 'center',
-    lineHeight: 28,
-  },
-  answersGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  answerCard: {
-    width: '48%',
-    minHeight: 120,
-    borderRadius: 16,
-    padding: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-    elevation: 5,
+  verdictNeutral: {
+    backgroundColor: colors.ink,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 6 }, shadowOpacity: 1, shadowRadius: 0, elevation: 5,
   },
+  verdictLabel: {
+    fontFamily: fonts.display, fontWeight: '800',
+    fontSize: 28, letterSpacing: -0.02, lineHeight: 30, color: '#fff',
+  },
+  verdictSub: { fontSize: 14, color: 'rgba(255,255,255,0.85)', fontWeight: '500' },
+
+  // ── Summary list ──
+  sumWrap: {
+    backgroundColor: colors.paper,
+    borderWidth: 1, borderColor: 'rgba(20,18,26,0.06)',
+    borderRadius: radii.xl, padding: 16, gap: 8,
+  },
+  sumLabel: {
+    fontFamily: fonts.num, fontSize: 12, fontWeight: '600',
+    letterSpacing: 0.08, textTransform: 'uppercase',
+    color: colors.inkMute, textAlign: 'right', marginBottom: 6,
+  },
+  sumRow: {
+    flexDirection: 'row-reverse', alignItems: 'center', gap: 10,
+    padding: 10, borderRadius: radii.md,
+    borderWidth: 1, borderColor: 'transparent',
+  },
+  sumRowCorrect: { borderColor: colors.ok, backgroundColor: 'rgba(30,158,95,0.06)' },
+  sumRowWrong:   { borderColor: colors.bad, backgroundColor: 'rgba(214,58,45,0.06)' },
+  sumTag: {
+    width: 34, height: 34, borderRadius: radii.sm,
+    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+  },
+  sumTagText: { fontFamily: fonts.display, fontWeight: '800', fontSize: 17 },
+  sumBody: { flex: 1, gap: 6 },
+  sumHead: {
+    flexDirection: 'row-reverse', alignItems: 'baseline',
+    justifyContent: 'space-between', gap: 8,
+  },
+  sumText: {
+    fontFamily: fonts.display, fontWeight: '700',
+    fontSize: 14, color: colors.ink, textAlign: 'right',
+  },
+  badgeOk: {
+    paddingHorizontal: 7, paddingVertical: 2,
+    backgroundColor: 'rgba(30,158,95,0.14)', borderRadius: radii.pill,
+  },
+  badgeOkText: { fontFamily: fonts.num, fontSize: 10.5, fontWeight: '700', color: colors.ok },
+  badgeMine: {
+    paddingHorizontal: 7, paddingVertical: 2,
+    backgroundColor: 'rgba(79,63,245,0.12)', borderRadius: radii.pill,
+  },
+  badgeMineText: { fontFamily: fonts.num, fontSize: 10.5, fontWeight: '700', color: colors.primary },
+  sumCountWrap: { flexDirection: 'row', alignItems: 'baseline', flexShrink: 0 },
+  sumCount: { fontFamily: fonts.num, fontWeight: '700', fontSize: 18, color: colors.ink },
+  sumPct: { fontFamily: fonts.num, fontSize: 11, color: colors.inkMute },
+  barTrack: { height: 6, backgroundColor: 'rgba(20,18,26,0.06)', borderRadius: 999, overflow: 'hidden' },
+  barFill: { height: '100%', borderRadius: 999 },
+
+  // ── Waiting pill ──
+  waitPill: {
+    flexDirection: 'row-reverse', alignItems: 'center', gap: 10,
+    paddingVertical: 12, paddingHorizontal: 18,
+    backgroundColor: colors.paper,
+    borderWidth: 1, borderColor: 'rgba(20,18,26,0.08)',
+    borderRadius: radii.pill,
+  },
+  pulseDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary },
+  waitPillText: { fontSize: 13.5, fontWeight: '600', color: colors.ink3 },
+
+  // ── QUESTION ──
+  qhead: {
+    flexDirection: 'row-reverse', justifyContent: 'space-between',
+    alignItems: 'center', paddingHorizontal: 16, marginBottom: 12, gap: 10,
+  },
+  chip: {
+    paddingHorizontal: 14, paddingVertical: 7,
+    backgroundColor: colors.ink, borderRadius: radii.pill,
+  },
+  chipText: { color: colors.paper, fontFamily: fonts.display, fontWeight: '700', fontSize: 13 },
+
+  hintCard: {
+    paddingVertical: 12, paddingHorizontal: 16,
+    backgroundColor: colors.paper,
+    borderWidth: 1, borderColor: 'rgba(20,18,26,0.06)',
+    borderRadius: radii.md, marginHorizontal: 16, marginBottom: 12,
+    gap: 2,
+  },
+  hintLabel: { fontFamily: fonts.display, fontWeight: '700', fontSize: 15, color: colors.ink, textAlign: 'right' },
+  hintSub: { fontSize: 13, color: colors.ink3, textAlign: 'right' },
+
+  answersGrid: {
+    flexDirection: 'row', flexWrap: 'wrap',
+    paddingHorizontal: 16, gap: 10, flex: 1,
+    alignContent: 'flex-start',
+  },
+  answerBtn: {
+    width: (width - 42) / 2,
+    minHeight: 110,
+    borderRadius: radii.lg,
+    padding: 16,
+    justifyContent: 'space-between',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 1, shadowRadius: 0, elevation: 5,
+  },
+  answerBtnSelected: {
+    transform: [{ translateY: 2 }],
+    shadowOffset: { width: 0, height: 0 },
+    opacity: 1,
+    borderWidth: 4, borderColor: colors.ink,
+  },
+  answerBtnDimmed: { opacity: 0.35, transform: [{ scale: 0.97 }] },
+  answerBtnTop: {
+    flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'flex-start',
+  },
+  answerLetter: { fontFamily: fonts.display, fontWeight: '800', fontSize: 32, lineHeight: 34 },
   answerText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '800',
-    textAlign: 'center',
+    fontFamily: fonts.display, fontWeight: '700',
+    fontSize: 15, lineHeight: 19, textAlign: 'right', marginTop: 6,
   },
-  waitingForOthersContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(34,211,238,0.05)',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(34,211,238,0.2)',
-    marginTop: 20,
-    maxHeight: 250,
-  },
-  waitingForOthersText: {
-    color: '#22d3ee',
-    fontSize: 24,
-    fontWeight: '900',
-    marginTop: 10,
-  },
-  waitingSubText: {
-    color: 'rgba(234,240,255,0.6)',
-    fontSize: 16,
-    marginTop: 8,
-  }
 });

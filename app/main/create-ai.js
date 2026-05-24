@@ -1,263 +1,338 @@
 // ===================================================================
-// app/main/create-ai.js — EduPlay design
+// app/main/create-ai.js — EduPlay design + logic
 // תואם 1:1 ל-AICreateQuiz.jsx של האתר:
-// - עיצוב: cream/paper, ink text, primary buttons
-// - לוגיקה: שאלות editable אחרי generate (textarea, זמן/נקודות, radio)
+// - instructions field (אופציונלי)
+// - points = scroll chips 1000-10000
+// - שאלות editable אחרי generate (textarea, זמן, נקודות, radio)
+// - "הוסף שאלה" ידנית אחרי generate
+// - "התחל מחדש" — מאפס הכל ל-step 1
+// - toast צף + reset אחרי שמירה (לא navigate)
 // ===================================================================
 import { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
-  KeyboardAvoidingView, Platform, ActivityIndicator, Alert, StyleSheet,
+  KeyboardAvoidingView, Platform, ActivityIndicator, Alert,
+  StyleSheet,
 } from 'react-native';
 import axios from 'axios';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
 import { SERVER_URL } from '../../utils/socket';
 import { colors, fonts, radii } from '../../constants/theme';
-import { EpShape } from '../../components/EpBrand';
+import { EpShape, ANSWER_META } from '../../components/EpBrand';
 import { Ionicons } from '@expo/vector-icons';
 
-const DIFFICULTIES = [
-  { label: 'קל',    value: 'easy'   },
-  { label: 'בינוני', value: 'medium' },
-  { label: 'קשה',   value: 'hard'   },
-];
-const NUM_OPTIONS = [5, 10, 15, 20];
+const POINTS_OPTIONS = [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000];
 
 /* ─────────────────────────────────────────────────────────
-   EditableQuestion — שאלה ניתנת לעריכה אחרי generate
-   מקביל ל-.question-card ב-AICreateQuiz.jsx של האתר
+   כרטיס שאלה editable — תואם .ep-ai__qcard באתר
 ───────────────────────────────────────────────────────── */
-function EditableQuestion({ q, index, onChange }) {
-  const COLORS = [colors.ans1, colors.ans2, colors.ans3, colors.ans4];
-
+function EditableQuestion({ q, index, onChange, onRemove }) {
   const updateField = (field, value) => {
     onChange(index, { ...q, [field]: field === 'text' ? value : Number(value) });
   };
 
-  const updateAnswerText = (aIndex, value) => {
+  const updateAnswerText = (aIdx, value) => {
     const updated = [...q.answers];
-    updated[aIndex] = { ...updated[aIndex], text: value };
+    updated[aIdx] = { ...updated[aIdx], text: value };
     onChange(index, { ...q, answers: updated });
   };
 
-  const setCorrect = (aIndex) => {
-    const updated = q.answers.map((a, i) => ({ ...a, isCorrect: i === aIndex }));
+  const setCorrect = (aIdx) => {
+    const updated = q.answers.map((a, i) => ({ ...a, isCorrect: i === aIdx }));
+    onChange(index, { ...q, answers: updated });
+  };
+
+  const addAnswer = () => {
+    if (q.answers.length >= 8) return;
+    onChange(index, { ...q, answers: [...q.answers, { text: '', isCorrect: false }] });
+  };
+
+  const removeAnswer = (aIdx) => {
+    if (q.answers.length <= 2) return;
+    const wasCorrect = q.answers[aIdx].isCorrect;
+    let updated = q.answers.filter((_, i) => i !== aIdx);
+    if (wasCorrect && !updated.some(a => a.isCorrect)) {
+      updated[0] = { ...updated[0], isCorrect: true };
+    }
     onChange(index, { ...q, answers: updated });
   };
 
   return (
     <View style={eqStyles.card}>
-      {/* מספר שאלה */}
-      <View style={eqStyles.numRow}>
-        <View style={[eqStyles.numBadge, { backgroundColor: COLORS[index % 4] }]}>
-          <Text style={eqStyles.numText}>{index + 1}</Text>
+      {/* ראש — מספר + badge AI + מחיקה */}
+      <View style={eqStyles.headRow}>
+        <Text style={eqStyles.qNum}>שאלה {String(index + 1).padStart(2, '0')}</Text>
+        <View style={eqStyles.headEnd}>
+          <View style={eqStyles.aiBadge}>
+            <Text style={eqStyles.aiBadgeText}>✦ AI</Text>
+          </View>
+          <TouchableOpacity style={eqStyles.delBtn} onPress={() => onRemove(index)}>
+            <Text style={eqStyles.delBtnText}>✕</Text>
+          </TouchableOpacity>
         </View>
-        <Text style={eqStyles.numLabel}>שאלה {index + 1}</Text>
       </View>
 
-      {/* טקסט שאלה — editable */}
-      <Text style={eqStyles.label}>טקסט השאלה</Text>
-      <TextInput
-        style={[eqStyles.input, eqStyles.textarea]}
-        value={q.text}
-        onChangeText={(v) => updateField('text', v)}
-        textAlign="right"
-        textAlignVertical="top"
-        multiline
-      />
+      {/* טקסט שאלה */}
+      <View>
+        <Text style={eqStyles.label}>טקסט השאלה</Text>
+        <TextInput
+          style={[eqStyles.input, eqStyles.textarea]}
+          value={q.text}
+          onChangeText={(v) => updateField('text', v)}
+          textAlign="right" textAlignVertical="top"
+          multiline maxLength={200}
+        />
+      </View>
 
       {/* זמן + נקודות */}
       <View style={eqStyles.metaRow}>
         <View style={{ flex: 1 }}>
-          <Text style={eqStyles.label}>שניות</Text>
+          <Text style={eqStyles.label}>זמן (שניות)</Text>
           <TextInput
             style={eqStyles.input}
             value={String(q.time)}
             onChangeText={(v) => updateField('time', v)}
-            keyboardType="numeric"
-            textAlign="center"
+            keyboardType="numeric" textAlign="center"
           />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={eqStyles.label}>נקודות</Text>
-          <TextInput
-            style={eqStyles.input}
-            value={String(q.points)}
-            onChangeText={(v) => updateField('points', v)}
-            keyboardType="numeric"
-            textAlign="center"
-          />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View style={{ flexDirection: 'row', gap: 6 }}>
+              {POINTS_OPTIONS.map((p) => (
+                <TouchableOpacity
+                  key={p}
+                  style={[eqStyles.pointsChip, q.points === p && eqStyles.pointsChipActive]}
+                  onPress={() => updateField('points', p)}
+                >
+                  <Text style={[eqStyles.pointsChipText, q.points === p && eqStyles.pointsChipTextActive]}>
+                    {p / 1000}k
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </ScrollView>
         </View>
       </View>
 
-      {/* תשובות — editable + radio */}
-      <Text style={[eqStyles.label, { marginBottom: 10 }]}>תשובות</Text>
-      {q.answers.map((a, aIndex) => (
-        <View key={aIndex} style={eqStyles.answerRow}>
-          <View style={[eqStyles.answerDot, { backgroundColor: COLORS[aIndex % 4] }]} />
+      {/* תשובות */}
+      <View style={eqStyles.answersHead}>
+        <Text style={eqStyles.label}>תשובות · סמנו את הנכונה</Text>
+        <Text style={eqStyles.answersCount}>{q.answers.length} תשובות</Text>
+      </View>
 
-          <TextInput
-            style={[eqStyles.answerInput, a.isCorrect && eqStyles.answerCorrect]}
-            value={a.text}
-            onChangeText={(v) => updateAnswerText(aIndex, v)}
-            textAlign="right"
-          />
+      {q.answers.map((a, aIdx) => {
+        const meta = ANSWER_META[aIdx % ANSWER_META.length];
+        return (
+          <View key={aIdx} style={[eqStyles.answerRow, a.isCorrect && eqStyles.answerRowCorrect]}>
+            <View style={[eqStyles.answerLetter, { backgroundColor: meta.color }]}>
+              <Text style={[eqStyles.answerLetterText, { color: meta.ink || '#fff' }]}>{meta.letter}</Text>
+              <EpShape kind={meta.shape} color={meta.ink || '#fff'} size={12} />
+            </View>
+            <TextInput
+              style={[eqStyles.answerInput, a.isCorrect && eqStyles.answerInputCorrect]}
+              value={a.text}
+              onChangeText={(v) => updateAnswerText(aIdx, v)}
+              placeholder={`תשובה ${aIdx + 1}`}
+              placeholderTextColor={colors.inkMute}
+              textAlign="right"
+            />
+            {/* radio */}
+            <TouchableOpacity
+              style={[eqStyles.radio, a.isCorrect && eqStyles.radioActive]}
+              onPress={() => setCorrect(aIdx)}
+            >
+              <Text style={eqStyles.radioMark}>{a.isCorrect ? '✓' : ''}</Text>
+            </TouchableOpacity>
+            {/* מחיקת תשובה */}
+            <TouchableOpacity
+              style={[eqStyles.answerDel, q.answers.length <= 2 && { opacity: 0.3 }]}
+              onPress={() => removeAnswer(aIdx)}
+              disabled={q.answers.length <= 2}
+            >
+              <Text style={eqStyles.answerDelText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+        );
+      })}
 
-          {/* radio — סמן כנכונה */}
-          <TouchableOpacity
-            style={[eqStyles.radio, a.isCorrect && eqStyles.radioActive]}
-            onPress={() => setCorrect(aIndex)}
-          >
-            {a.isCorrect && <View style={eqStyles.radioDot} />}
-          </TouchableOpacity>
-        </View>
-      ))}
+      {q.answers.length < 8 && (
+        <TouchableOpacity style={eqStyles.addAnswer} onPress={addAnswer}>
+          <Text style={eqStyles.addAnswerPlus}>+</Text>
+          <Text style={eqStyles.addAnswerText}>הוסף תשובה</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
 
 const eqStyles = StyleSheet.create({
   card: {
-    backgroundColor: colors.paper,
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    borderColor: 'rgba(20,18,26,0.06)',
-    padding: 18,
-    marginBottom: 14,
+    backgroundColor: colors.paper, borderRadius: radii.xl,
+    borderWidth: 1, borderColor: 'rgba(20,18,26,0.06)',
+    padding: 22, marginBottom: 14, gap: 14,
   },
-  numRow: {
-    flexDirection: 'row-reverse',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 14,
+  headRow: {
+    flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center',
   },
-  numBadge: {
-    width: 28, height: 28, borderRadius: 9,
+  qNum: {
+    fontFamily: fonts.num, fontSize: 12, fontWeight: '700',
+    letterSpacing: 0.08, textTransform: 'uppercase', color: colors.inkMute,
+  },
+  headEnd: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  aiBadge: {
+    paddingHorizontal: 10, paddingVertical: 4,
+    backgroundColor: 'rgba(79,63,245,0.1)',
+    borderWidth: 1, borderColor: 'rgba(79,63,245,0.22)',
+    borderRadius: radii.pill,
+  },
+  aiBadgeText: { fontFamily: fonts.num, fontSize: 11, fontWeight: '700', color: colors.primary },
+  delBtn: {
+    width: 28, height: 28, borderRadius: 14,
+    borderWidth: 1, borderColor: 'rgba(20,18,26,0.12)',
     alignItems: 'center', justifyContent: 'center',
   },
-  numText: {
-    fontFamily: fonts.num, fontWeight: '700',
-    fontSize: 13, color: '#fff',
-  },
-  numLabel: {
-    fontFamily: fonts.display, fontWeight: '700',
-    fontSize: 14, color: colors.ink,
-  },
+  delBtnText: { color: colors.ink3, fontWeight: '700', fontSize: 12 },
   label: {
-    fontFamily: fonts.body, fontSize: 12, fontWeight: '600',
-    color: colors.ink3, textAlign: 'right', marginBottom: 6,
+    fontFamily: fonts.body, fontSize: 13, fontWeight: '600',
+    color: colors.ink3, textAlign: 'right', marginBottom: 8,
   },
   input: {
-    backgroundColor: colors.cream,
-    borderWidth: 2, borderColor: colors.blackAlpha08,
-    borderRadius: radii.sm,
-    paddingHorizontal: 12, paddingVertical: 10,
-    fontFamily: fonts.body, fontSize: 14,
-    color: colors.ink,
-    marginBottom: 12,
+    backgroundColor: colors.cream, borderWidth: 2, borderColor: colors.blackAlpha08,
+    borderRadius: radii.md, paddingHorizontal: 14, paddingVertical: 12,
+    fontFamily: fonts.display, fontWeight: '600', fontSize: 15, color: colors.ink,
   },
-  textarea: { minHeight: 72, paddingTop: 10 },
-  metaRow: { flexDirection: 'row', gap: 10, marginBottom: 14 },
-
+  textarea: { minHeight: 64, paddingTop: 12, fontFamily: fonts.display },
+  metaRow: { flexDirection: 'row', gap: 12 },
+  pointsChip: {
+    paddingHorizontal: 12, paddingVertical: 8,
+    borderRadius: radii.pill, borderWidth: 1.5,
+    borderColor: colors.blackAlpha08, backgroundColor: colors.cream,
+  },
+  pointsChipActive: { backgroundColor: colors.ink, borderColor: colors.ink },
+  pointsChipText: { fontFamily: fonts.num, fontSize: 12, fontWeight: '700', color: colors.ink3 },
+  pointsChipTextActive: { color: colors.paper },
+  answersHead: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center' },
+  answersCount: { fontFamily: fonts.num, fontSize: 12, fontWeight: '600', color: colors.inkMute },
   answerRow: {
-    flexDirection: 'row-reverse',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
+    flexDirection: 'row-reverse', alignItems: 'center', gap: 8, padding: 4,
+    backgroundColor: colors.cream, borderWidth: 2, borderColor: 'transparent', borderRadius: radii.md,
   },
-  answerDot: {
-    width: 8, height: 8, borderRadius: 4,
+  answerRowCorrect: { borderColor: colors.ok, backgroundColor: 'rgba(30,158,95,0.06)' },
+  answerLetter: {
+    width: 44, height: 44, borderRadius: radii.sm,
+    alignItems: 'center', justifyContent: 'center', gap: 1,
   },
+  answerLetterText: { fontFamily: fonts.display, fontWeight: '800', fontSize: 18, lineHeight: 20 },
   answerInput: {
-    flex: 1,
-    backgroundColor: colors.cream,
-    borderWidth: 2, borderColor: colors.blackAlpha08,
-    borderRadius: radii.sm,
-    paddingHorizontal: 12, paddingVertical: 9,
-    fontFamily: fonts.body, fontSize: 13,
-    color: colors.ink,
+    flex: 1, backgroundColor: colors.paper, borderWidth: 2,
+    borderColor: colors.blackAlpha08, borderRadius: radii.sm,
+    paddingHorizontal: 12, paddingVertical: 10,
+    fontFamily: fonts.body, fontSize: 14, color: colors.ink,
   },
-  answerCorrect: {
-    borderColor: colors.ok,
-    backgroundColor: 'rgba(30,158,95,0.07)',
-  },
+  answerInputCorrect: { borderColor: colors.ok, backgroundColor: 'rgba(30,158,95,0.06)' },
   radio: {
-    width: 22, height: 22, borderRadius: 11,
-    borderWidth: 2, borderColor: colors.blackAlpha16,
+    width: 30, height: 30, borderRadius: 15,
+    borderWidth: 2, borderColor: 'rgba(20,18,26,0.18)',
+    backgroundColor: colors.paper, alignItems: 'center', justifyContent: 'center',
+  },
+  radioActive: { borderColor: colors.ok, backgroundColor: colors.ok },
+  radioMark: { fontWeight: '900', fontSize: 13, color: '#fff' },
+  answerDel: {
+    width: 30, height: 30, borderRadius: 15,
+    borderWidth: 1, borderColor: 'rgba(20,18,26,0.12)',
     alignItems: 'center', justifyContent: 'center',
   },
-  radioActive: { borderColor: colors.ok, backgroundColor: 'rgba(30,158,95,0.1)' },
-  radioDot: {
-    width: 10, height: 10, borderRadius: 5,
-    backgroundColor: colors.ok,
+  answerDelText: { color: colors.ink3, fontWeight: '700', fontSize: 12 },
+  addAnswer: {
+    flexDirection: 'row-reverse', alignItems: 'center', gap: 6,
+    paddingVertical: 10, paddingHorizontal: 14,
+    borderWidth: 1, borderColor: 'rgba(20,18,26,0.18)',
+    borderRadius: radii.pill, borderStyle: 'dashed', alignSelf: 'flex-start',
   },
+  addAnswerPlus: { fontFamily: fonts.display, fontWeight: '900', fontSize: 16, color: colors.ink3 },
+  addAnswerText: { fontFamily: fonts.body, fontSize: 13.5, fontWeight: '600', color: colors.ink3 },
 });
 
 /* ─────────────────────────────────────────────────────────
    מסך ראשי — CreateAI
 ───────────────────────────────────────────────────────── */
 export default function CreateAI() {
-  const [topic,       setTopic]       = useState('');
-  const [difficulty,  setDifficulty]  = useState('medium');
-  const [numQuestions,setNumQuestions]= useState(10);
-  const [generating,  setGenerating]  = useState(false);
-  const [saving,      setSaving]      = useState(false);
+  // שלב 1 — generate form
+  const [topic,        setTopic]        = useState('');
+  const [instructions, setInstructions] = useState('');  // ← כמו באתר
+  const [numQuestions, setNumQuestions] = useState(5);   // ← ברירת מחדל 5 כמו באתר
+  const [loading,      setLoading]      = useState(false);
+  const [error,        setError]        = useState('');
 
-  const [quiz,      setQuiz]      = useState(null);   // { title, description }
-  const [questions, setQuestions] = useState([]);     // editable
+  // שלב 2 — review
+  const [quiz,      setQuiz]      = useState(null);
+  const [questions, setQuestions] = useState([]);
+  const [saving,    setSaving]    = useState(false);
+  const [success,   setSuccess]   = useState(false);
 
   const { token } = useAuth();
   const router    = useRouter();
 
   /* ── Generate ── */
   const handleGenerate = async () => {
-    if (!topic.trim()) return Alert.alert('שגיאה', 'אנא הכניסו נושא לשאלון');
+    if (!topic.trim()) { setError('יש להזין נושא'); return; }
+    setError('');
     try {
-      setGenerating(true);
-      setQuiz(null);
-      setQuestions([]);
-
+      setLoading(true);
       const res = await axios.post(`${SERVER_URL}/ai/generate-quiz`, {
-        topic, difficulty, numQuestions,
+        topic, instructions, numQuestions,
       });
-
-      // המרה לפורמט editable — זהה ל-AICreateQuiz.jsx באתר
-      const generated = res.data.questions.map((q) => ({
-        text:   q.text,
-        type:   'multiple-choice',
-        time:   30,
-        points: 1,
-        answers: q.options.map((opt, i) => ({
-          text:      opt,
-          isCorrect: i === q.correctIndex,
-        })),
-      }));
 
       setQuiz({
         title:       res.data.title       || topic,
         description: res.data.description || 'AI quiz',
       });
-      setQuestions(generated);
 
+      setQuestions(res.data.questions.map((q) => ({
+        text:   q.text,
+        type:   'multiple-choice',
+        time:   30,
+        points: 1000,
+        answers: q.options.map((opt, i) => ({
+          text:      opt,
+          isCorrect: i === q.correctIndex,
+        })),
+      })));
     } catch {
-      Alert.alert('שגיאה', 'שגיאה ביצירת השאלון עם AI');
+      setError('בעיה ביצירת החידון. נסו שוב או שנו את הנושא.');
     } finally {
-      setGenerating(false);
+      setLoading(false);
     }
   };
 
-  /* ── עדכון שאלה בודדת (מה-EditableQuestion) ── */
-  const handleQuestionChange = (index, updated) => {
-    const copy = [...questions];
-    copy[index] = updated;
-    setQuestions(copy);
+  /* ── Update question (from EditableQuestion) ── */
+  const handleQuestionChange = (idx, updated) => {
+    const copy = [...questions]; copy[idx] = updated; setQuestions(copy);
+  };
+
+  /* ── Remove question ── */
+  const handleRemoveQuestion = (idx) => {
+    setQuestions(questions.filter((_, i) => i !== idx));
+  };
+
+  /* ── Add blank question ── */
+  const handleAddQuestion = () => {
+    setQuestions([...questions, {
+      text: '', type: 'multiple-choice', time: 30, points: 1000,
+      answers: [
+        { text: '', isCorrect: true  },
+        { text: '', isCorrect: false },
+        { text: '', isCorrect: false },
+        { text: '', isCorrect: false },
+      ],
+    }]);
   };
 
   /* ── Save ── */
   const handleSave = async () => {
-    if (!quiz || questions.length === 0)
-      return Alert.alert('שגיאה', 'אין שאלות לשמירה');
+    if (!quiz || questions.length === 0) return;
     try {
       setSaving(true);
       await axios.post(
@@ -265,9 +340,11 @@ export default function CreateAI() {
         { ...quiz, questions },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      Alert.alert('✅ הצלחה', 'החידון נשמר בהצלחה', [
-        { text: 'אישור', onPress: () => router.replace('/main/my-quizzes') },
-      ]);
+      // toast + reset — כמו באתר
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 1500);
+      setQuiz(null);
+      setQuestions([]);
     } catch (err) {
       Alert.alert('שגיאה', err.response?.data?.message || 'שגיאה בשמירה');
     } finally {
@@ -275,135 +352,189 @@ export default function CreateAI() {
     }
   };
 
+  /* ── Reset to step 1 ── */
+  const handleReset = () => {
+    Alert.alert('לזרוק את הטיוטה?', 'הטיוטה תימחק ותתחיל מחדש.', [
+      { text: 'ביטול', style: 'cancel' },
+      { text: 'התחל מחדש', style: 'destructive', onPress: () => { setQuiz(null); setQuestions([]); } },
+    ]);
+  };
+
+  const totalPoints = questions.reduce((s, q) => s + (q.points || 0), 0);
+  const totalTime   = questions.reduce((s, q) => s + (q.time   || 0), 0);
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: colors.cream }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
+      {/* Toast */}
+      {success && (
+        <View style={s.toast} pointerEvents="none">
+          <View style={s.toastIcon}><Text style={s.toastIconText}>✓</Text></View>
+          <Text style={s.toastText}>החידון נשמר בהצלחה</Text>
+        </View>
+      )}
+
       {/* Header */}
-      <View style={aiStyles.header}>
+      <View style={s.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color={colors.ink} />
         </TouchableOpacity>
-        <Text style={aiStyles.headerTitle}>יצירה עם AI ✨</Text>
+        <Text style={s.headerTitle}>יצירה עם AI ✨</Text>
         <View style={{ width: 24 }} />
       </View>
 
       <ScrollView
-        contentContainerStyle={aiStyles.scroll}
+        contentContainerStyle={s.scroll}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
 
-        {/* ══ טופס הגדרות ══ */}
-        <View style={aiStyles.settingsCard}>
-          {/* art */}
-          <View style={aiStyles.art}>
-            <View style={aiStyles.artBlur} />
-            <EpShape kind="burst" color={colors.ans1} size={52} />
-          </View>
-
-          <Text style={aiStyles.kicker}>יצירה חכמה</Text>
-          <Text style={aiStyles.title}>יצרו חידון עם AI</Text>
-          <Text style={aiStyles.sub}>
-            בחרו נושא ורמת קושי — הבינה המלאכותית תייצר טיוטה,
-            ואתם תוכלו לערוך לפני השמירה.
-          </Text>
-
-          <View style={{ gap: 16, marginTop: 22 }}>
-            {/* נושא */}
-            <View>
-              <Text style={aiStyles.label}>נושא החידון</Text>
-              <TextInput
-                style={[aiStyles.input, aiStyles.textarea]}
-                placeholder="לדוגמה: היסטוריה של ישראל, כדורגל, מדע…"
-                placeholderTextColor={colors.inkMute}
-                textAlign="right"
-                textAlignVertical="top"
-                multiline
-                value={topic}
-                onChangeText={setTopic}
-              />
+        {/* ══ Step 1 — Generate form ══ */}
+        {!quiz && (
+          <View style={s.formCard}>
+            {/* Art */}
+            <View style={s.art}>
+              <View style={s.artBlur} />
+              <EpShape kind="burst" color={colors.ans1} size={52} />
             </View>
 
-            {/* רמת קושי */}
-            <View>
-              <Text style={aiStyles.label}>רמת קושי</Text>
-              <View style={aiStyles.pills}>
-                {DIFFICULTIES.map((d) => (
+            <Text style={s.kicker}>✦ חידון חדש · בעזרת AI</Text>
+            <Text style={s.title}>
+              תנו ל-AI{'\n'}
+              <Text style={{ color: colors.primary }}>להציע.</Text>
+            </Text>
+            <Text style={s.sub}>
+              הזינו נושא, בחרו רמת קושי וכמות שאלות.
+              ה-AI ייצור טיוטה ואתם תערכו לפני השמירה.
+            </Text>
+
+            <View style={{ gap: 16, marginTop: 22 }}>
+              {/* נושא */}
+              <View>
+                <Text style={s.label}>נושא החידון</Text>
+                <TextInput
+                  style={[s.input, s.textarea]}
+                  placeholder="לדוגמה: מלחמות העולם, פיזיקה כיתה י', ספרי בראשית…"
+                  placeholderTextColor={colors.inkMute}
+                  textAlign="right" textAlignVertical="top"
+                  multiline maxLength={500} autoFocus
+                  value={topic}
+                  onChangeText={(v) => { setTopic(v); if (error) setError(''); }}
+                />
+                <Text style={s.hint}>ככל שהנושא יותר ספציפי — השאלות יותר מדויקות.</Text>
+              </View>
+
+              {/* הנחיות (אופציונלי) — כמו באתר */}
+              <View>
+                <Text style={s.label}>הנחיות לחידון (אופציונלי)</Text>
+                <TextInput
+                  style={[s.input, { minHeight: 72 }]}
+                  placeholder="לדוגמה: שאלות לכיתה ז', ברמה קשה, עם דגש על תאריכים…"
+                  placeholderTextColor={colors.inkMute}
+                  textAlign="right" textAlignVertical="top"
+                  multiline maxLength={300}
+                  value={instructions}
+                  onChangeText={setInstructions}
+                />
+              </View>
+
+              {/* מספר שאלות — stepper כמו באתר */}
+              <View>
+                <Text style={s.label}>מספר שאלות</Text>
+                <View style={s.stepper}>
                   <TouchableOpacity
-                    key={d.value}
-                    style={[aiStyles.pill, difficulty === d.value && aiStyles.pillActive]}
-                    onPress={() => setDifficulty(d.value)}
+                    style={s.stepperBtn}
+                    onPress={() => setNumQuestions(Math.max(1, numQuestions - 1))}
                   >
-                    <Text style={[aiStyles.pillText, difficulty === d.value && aiStyles.pillTextActive]}>
-                      {d.label}
-                    </Text>
+                    <Text style={s.stepperBtnText}>−</Text>
                   </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-
-            {/* מספר שאלות */}
-            <View>
-              <Text style={aiStyles.label}>מספר שאלות</Text>
-              <View style={aiStyles.pills}>
-                {NUM_OPTIONS.map((n) => (
+                  <TextInput
+                    style={s.stepperInput}
+                    value={String(numQuestions)}
+                    onChangeText={(v) => { const n = Number(v); if (n >= 1 && n <= 50) setNumQuestions(n); }}
+                    keyboardType="numeric" textAlign="center"
+                  />
                   <TouchableOpacity
-                    key={n}
-                    style={[aiStyles.pill, numQuestions === n && aiStyles.pillActive]}
-                    onPress={() => setNumQuestions(n)}
+                    style={s.stepperBtn}
+                    onPress={() => setNumQuestions(Math.min(50, numQuestions + 1))}
                   >
-                    <Text style={[aiStyles.pillText, numQuestions === n && aiStyles.pillTextActive]}>
-                      {n}
-                    </Text>
+                    <Text style={s.stepperBtnText}>+</Text>
                   </TouchableOpacity>
-                ))}
+                </View>
               </View>
+
+              {error ? (
+                <View style={s.errorBox}>
+                  <View style={s.errorIcon}><Text style={s.errorIconText}>!</Text></View>
+                  <Text style={s.errorText}>{error}</Text>
+                </View>
+              ) : null}
             </View>
+
+            {/* Submit */}
+            <TouchableOpacity
+              style={[s.generateBtn, loading && { opacity: 0.7 }]}
+              onPress={handleGenerate} disabled={loading}
+              activeOpacity={0.85}
+            >
+              {loading ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <ActivityIndicator color="#fff" size="small" />
+                  <Text style={s.generateBtnText}>ה-AI חושב…</Text>
+                </View>
+              ) : (
+                <View style={{ flexDirection: 'row-reverse', alignItems: 'center', gap: 8 }}>
+                  <Text style={s.generateBtnSpark}>✦</Text>
+                  <Text style={s.generateBtnText}>צרו עבורי חידון</Text>
+                </View>
+              )}
+            </TouchableOpacity>
           </View>
+        )}
 
-          {/* Generate button */}
-          <TouchableOpacity
-            style={[aiStyles.generateBtn, generating && aiStyles.btnDisabled]}
-            onPress={handleGenerate}
-            disabled={generating}
-            activeOpacity={0.85}
-          >
-            {generating ? (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <ActivityIndicator color="#fff" size="small" />
-                <Text style={aiStyles.generateBtnText}>יוצר שאלון…</Text>
-              </View>
-            ) : (
-              <View style={{ flexDirection: 'row-reverse', alignItems: 'center', gap: 8 }}>
-                <Ionicons name="sparkles-outline" size={18} color="#fff" />
-                <Text style={aiStyles.generateBtnText}>צור שאלון</Text>
-              </View>
-            )}
-          </TouchableOpacity>
-        </View>
-
-        {/* ══ שאלות editable (אחרי generate) ══ */}
-        {quiz && questions.length > 0 && (
+        {/* ══ Step 2 — Review & edit ══ */}
+        {quiz && (
           <>
-            {/* כותרת חידון */}
-            <View style={aiStyles.quizHeader}>
+            {/* Header */}
+            <View style={s.reviewHead}>
               <View style={{ flex: 1, alignItems: 'flex-end' }}>
-                <Text style={aiStyles.quizTitle}>{quiz.title}</Text>
-                <Text style={aiStyles.quizMeta}>
-                  {questions.length} שאלות · ניתנות לעריכה
-                </Text>
+                <Text style={s.kicker}>✦ טיוטה של AI · עריכה לפני שמירה</Text>
+                <Text style={s.reviewTitle}>{quiz.title}</Text>
+                {quiz.description && quiz.description !== 'AI quiz' ? (
+                  <Text style={s.reviewDesc}>{quiz.description}</Text>
+                ) : null}
               </View>
-              {/* צור מחדש */}
-              <TouchableOpacity
-                style={aiStyles.regenBtn}
-                onPress={handleGenerate}
-                disabled={generating}
-              >
-                <Ionicons name="refresh-outline" size={16} color={colors.ink3} />
-                <Text style={aiStyles.regenText}>מחדש</Text>
-              </TouchableOpacity>
+              <View style={s.reviewActions}>
+                <TouchableOpacity style={s.ghostBtn} onPress={handleReset}>
+                  <Text style={s.ghostBtnText}>← התחל מחדש</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[s.primaryBtn, (saving || questions.length === 0) && { opacity: 0.6 }]}
+                  onPress={handleSave}
+                  disabled={saving || questions.length === 0}
+                >
+                  {saving
+                    ? <ActivityIndicator color="#fff" size="small" />
+                    : <Text style={s.primaryBtnText}>שמור חידון</Text>
+                  }
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* סטטיסטיקות */}
+            <View style={s.stats}>
+              {[
+                { label: 'שאלות',          value: String(questions.length)      },
+                { label: 'סה"כ נקודות',    value: totalPoints.toLocaleString()  },
+                { label: 'משך משוער',       value: `${Math.ceil(totalTime / 60)} דק'` },
+              ].map((item, i) => (
+                <View key={i} style={[s.statItem, i === 0 && { borderRightWidth: 0 }]}>
+                  <Text style={s.statValue}>{item.value}</Text>
+                  <Text style={s.statLabel}>{item.label}</Text>
+                </View>
+              ))}
             </View>
 
             {/* שאלות editable */}
@@ -413,23 +544,14 @@ export default function CreateAI() {
                 q={q}
                 index={i}
                 onChange={handleQuestionChange}
+                onRemove={handleRemoveQuestion}
               />
             ))}
 
-            {/* שמור */}
-            <TouchableOpacity
-              style={[aiStyles.saveBtn, saving && aiStyles.btnDisabled]}
-              onPress={handleSave}
-              disabled={saving}
-              activeOpacity={0.85}
-            >
-              {saving
-                ? <ActivityIndicator color="#fff" />
-                : <>
-                    <Text style={aiStyles.saveBtnText}>שמור חידון</Text>
-                    <Text style={aiStyles.saveBtnArrow}>←</Text>
-                  </>
-              }
+            {/* + הוסף שאלה ידנית — כמו באתר */}
+            <TouchableOpacity style={s.addQuestionBtn} onPress={handleAddQuestion}>
+              <Text style={s.addQuestionBtnPlus}>+</Text>
+              <Text style={s.addQuestionBtnText}>הוסף שאלה</Text>
             </TouchableOpacity>
           </>
         )}
@@ -438,56 +560,56 @@ export default function CreateAI() {
   );
 }
 
-const aiStyles = StyleSheet.create({
+const s = StyleSheet.create({
+  toast: {
+    position: 'absolute', top: 80, alignSelf: 'center', zIndex: 100,
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    paddingVertical: 12, paddingHorizontal: 22,
+    backgroundColor: colors.ok, borderRadius: radii.pill,
+    shadowColor: 'rgba(30,158,95,0.3)', shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 1, shadowRadius: 24, elevation: 10,
+  },
+  toastIcon: {
+    width: 22, height: 22, borderRadius: 11,
+    backgroundColor: 'rgba(255,255,255,0.25)', alignItems: 'center', justifyContent: 'center',
+  },
+  toastIconText: { color: '#fff', fontWeight: '900' },
+  toastText: { color: '#fff', fontFamily: fonts.display, fontWeight: '700', fontSize: 15 },
+
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 16,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingHorizontal: 20, paddingTop: 60, paddingBottom: 16,
     backgroundColor: colors.cream,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(20,18,26,0.06)',
+    borderBottomWidth: 1, borderBottomColor: 'rgba(20,18,26,0.06)',
   },
-  headerTitle: {
-    fontFamily: fonts.display, fontWeight: '800',
-    fontSize: 18, color: colors.ink,
-  },
+  headerTitle: { fontFamily: fonts.display, fontWeight: '800', fontSize: 18, color: colors.ink },
 
-  scroll: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 120,
-  },
+  scroll: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 120 },
 
-  // Settings card
-  settingsCard: {
-    backgroundColor: colors.paper,
-    borderRadius: radii.xl,
-    borderWidth: 1,
-    borderColor: 'rgba(20,18,26,0.06)',
-    padding: 24,
-    marginBottom: 16,
+  // ── Step 1 form card ──
+  formCard: {
+    backgroundColor: colors.paper, borderRadius: radii.xl,
+    borderWidth: 1, borderColor: 'rgba(20,18,26,0.06)',
+    padding: 26, maxWidth: 640, width: '100%', alignSelf: 'center',
+    shadowColor: colors.ink, shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.06, shadowRadius: 32, elevation: 6,
   },
   art: {
     height: 72, alignItems: 'center', justifyContent: 'center',
     marginBottom: 12, position: 'relative',
   },
   artBlur: {
-    position: 'absolute',
-    width: 100, height: 100, borderRadius: 50,
+    position: 'absolute', width: 100, height: 100, borderRadius: 50,
     backgroundColor: colors.ans1, opacity: 0.1,
   },
   kicker: {
-    fontFamily: fonts.num, fontSize: 11, fontWeight: '600',
-    letterSpacing: 1.2, textTransform: 'uppercase',
-    color: colors.inkMute, textAlign: 'right', marginBottom: 6,
+    fontFamily: fonts.num, fontSize: 12, fontWeight: '600',
+    letterSpacing: 0.04, color: colors.inkMute,
+    textAlign: 'right', marginBottom: 6,
   },
   title: {
-    fontFamily: fonts.display, fontWeight: '800',
-    fontSize: 26, letterSpacing: -0.6,
-    color: colors.ink, textAlign: 'right',
+    fontFamily: fonts.display, fontWeight: '800', fontSize: 36,
+    letterSpacing: -0.03, lineHeight: 38, color: colors.ink, textAlign: 'right',
   },
   sub: {
     fontFamily: fonts.body, fontSize: 14, lineHeight: 21,
@@ -498,110 +620,100 @@ const aiStyles = StyleSheet.create({
     color: colors.ink3, textAlign: 'right', marginBottom: 8,
   },
   input: {
-    backgroundColor: colors.cream,
-    borderWidth: 2, borderColor: colors.blackAlpha08,
-    borderRadius: radii.md,
-    paddingHorizontal: 16, paddingVertical: 13,
-    fontFamily: fonts.body, fontSize: 15,
-    color: colors.ink,
+    backgroundColor: colors.cream, borderWidth: 2,
+    borderColor: colors.blackAlpha08, borderRadius: radii.md,
+    paddingHorizontal: 16, paddingVertical: 14,
+    fontFamily: fonts.body, fontSize: 15, color: colors.ink,
   },
-  textarea: { minHeight: 76, paddingTop: 12 },
+  textarea: { minHeight: 80, paddingTop: 14 },
+  hint: { fontSize: 12, color: colors.inkMute, textAlign: 'right', marginTop: 4 },
 
-  // Pills
-  pills: {
-    flexDirection: 'row',
-    gap: 8,
-    justifyContent: 'flex-end',
-  },
-  pill: {
-    paddingHorizontal: 16, paddingVertical: 8,
-    borderRadius: radii.pill,
-    borderWidth: 1.5,
-    borderColor: colors.blackAlpha08,
-    backgroundColor: colors.cream,
-  },
-  pillActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  pillText: {
-    fontFamily: fonts.body, fontSize: 13, fontWeight: '600',
-    color: colors.ink3,
-  },
-  pillTextActive: { color: '#fff' },
-
-  // Generate button — violet burst
-  generateBtn: {
-    flexDirection: 'row-reverse',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    marginTop: 20,
-    backgroundColor: colors.ans2,   // violet — כמו כפתור AI באתר
-    paddingVertical: 16,
-    borderRadius: radii.pill,
-    shadowColor: colors.ans2Ink,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 1, shadowRadius: 0,
-    elevation: 5,
-  },
-  generateBtnText: {
-    fontFamily: fonts.display, fontSize: 16, fontWeight: '700',
-    color: '#fff',
-  },
-  btnDisabled: { opacity: 0.6 },
-
-  // Quiz header after generate
-  quizHeader: {
-    flexDirection: 'row-reverse',
-    alignItems: 'center',
-    gap: 12,
+  // stepper
+  stepper: {
+    flexDirection: 'row', alignItems: 'stretch',
     backgroundColor: colors.paper,
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    borderColor: 'rgba(20,18,26,0.06)',
-    padding: 16,
-    marginBottom: 14,
+    borderWidth: 2, borderColor: colors.blackAlpha08,
+    borderRadius: radii.md, overflow: 'hidden', height: 50,
   },
-  quizTitle: {
-    fontFamily: fonts.display, fontWeight: '800',
-    fontSize: 18, color: colors.ink, textAlign: 'right',
+  stepperBtn: {
+    width: 44, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'transparent',
   },
-  quizMeta: {
-    fontFamily: fonts.num, fontSize: 11,
-    color: colors.inkMute, marginTop: 2,
-  },
-  regenBtn: {
-    flexDirection: 'row-reverse',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12, paddingVertical: 7,
-    borderWidth: 1, borderColor: colors.blackAlpha16,
-    borderRadius: radii.pill,
-  },
-  regenText: {
-    fontFamily: fonts.body, fontSize: 12, fontWeight: '600',
-    color: colors.ink3,
+  stepperBtnText: { fontFamily: fonts.display, fontWeight: '900', fontSize: 22, color: colors.ink3 },
+  stepperInput: {
+    flex: 1, textAlign: 'center',
+    fontFamily: fonts.num, fontWeight: '700', fontSize: 20, color: colors.ink,
+    borderLeftWidth: 1, borderRightWidth: 1, borderColor: colors.blackAlpha08,
   },
 
-  // Save button
-  saveBtn: {
-    flexDirection: 'row-reverse',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
+  errorBox: {
+    flexDirection: 'row-reverse', alignItems: 'flex-start', gap: 10,
+    paddingHorizontal: 14, paddingVertical: 12,
+    backgroundColor: 'rgba(214,58,45,0.08)',
+    borderWidth: 1, borderColor: 'rgba(214,58,45,0.25)', borderRadius: radii.sm,
+  },
+  errorIcon: {
+    width: 20, height: 20, borderRadius: 10,
+    backgroundColor: colors.bad, alignItems: 'center', justifyContent: 'center',
+  },
+  errorIconText: { color: '#fff', fontWeight: '900', fontSize: 12 },
+  errorText: { color: colors.bad, fontSize: 14, flex: 1, textAlign: 'right' },
+
+  generateBtn: {
+    flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center',
+    gap: 10, marginTop: 20, paddingVertical: 17,
+    backgroundColor: colors.primary, borderRadius: radii.pill,
+    shadowColor: colors.primaryDeep, shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 1, shadowRadius: 0, elevation: 6,
+  },
+  generateBtnSpark: { color: colors.ans3, fontWeight: '900', fontSize: 16 },
+  generateBtnText: { fontFamily: fonts.display, fontSize: 17, fontWeight: '700', color: '#fff' },
+
+  // ── Step 2 ──
+  reviewHead: {
+    flexDirection: 'row-reverse', justifyContent: 'space-between',
+    alignItems: 'flex-end', gap: 16, marginBottom: 20,
+  },
+  reviewTitle: {
+    fontFamily: fonts.display, fontWeight: '800', fontSize: 28,
+    letterSpacing: -0.025, color: colors.ink, textAlign: 'right',
+  },
+  reviewDesc: { fontSize: 14.5, color: colors.ink3, textAlign: 'right', marginTop: 4 },
+  reviewActions: { flexDirection: 'row', gap: 8, flexShrink: 0 },
+  ghostBtn: {
+    paddingVertical: 11, paddingHorizontal: 16, borderRadius: radii.pill,
+    borderWidth: 1, borderColor: 'rgba(20,18,26,0.12)',
+  },
+  ghostBtnText: { fontFamily: fonts.body, fontWeight: '700', fontSize: 14, color: colors.ink3 },
+  primaryBtn: {
+    paddingVertical: 11, paddingHorizontal: 18, borderRadius: radii.pill,
     backgroundColor: colors.primary,
-    paddingVertical: 17,
-    borderRadius: radii.pill,
-    marginTop: 4,
-    shadowColor: colors.primaryDeep,
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 1, shadowRadius: 0,
-    elevation: 6,
+    shadowColor: colors.primaryDeep, shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 1, shadowRadius: 0, elevation: 4,
   },
-  saveBtnText: {
-    color: '#fff', fontFamily: fonts.display,
-    fontSize: 17, fontWeight: '700',
+  primaryBtnText: { fontFamily: fonts.display, fontWeight: '700', fontSize: 14, color: '#fff' },
+
+  stats: {
+    flexDirection: 'row', backgroundColor: colors.paper,
+    borderWidth: 1, borderColor: 'rgba(20,18,26,0.06)',
+    borderRadius: radii.lg, overflow: 'hidden', marginBottom: 20,
   },
-  saveBtnArrow: { color: '#fff', fontSize: 20 },
+  statItem: {
+    flex: 1, alignItems: 'center', gap: 4, paddingVertical: 14,
+    borderRightWidth: 1, borderRightColor: 'rgba(20,18,26,0.08)',
+  },
+  statValue: { fontFamily: fonts.display, fontWeight: '800', fontSize: 22, color: colors.ink, lineHeight: 24 },
+  statLabel: {
+    fontFamily: fonts.num, fontSize: 11, fontWeight: '500',
+    color: colors.inkMute, textTransform: 'uppercase',
+  },
+
+  addQuestionBtn: {
+    flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center',
+    gap: 8, width: '100%', paddingVertical: 16,
+    borderWidth: 2, borderColor: 'rgba(20,18,26,0.18)',
+    borderRadius: radii.lg, borderStyle: 'dashed', marginTop: 4,
+  },
+  addQuestionBtnPlus: { fontFamily: fonts.display, fontWeight: '900', fontSize: 20, color: colors.ink3 },
+  addQuestionBtnText: { fontFamily: fonts.display, fontWeight: '700', fontSize: 15, color: colors.ink3 },
 });

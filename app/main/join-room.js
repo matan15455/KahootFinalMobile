@@ -167,9 +167,9 @@ export default function JoinRoom() {
                 placeholderTextColor="rgba(20,18,26,0.18)"
                 value={roomId}
                 onChangeText={setRoomId}
-                keyboardType="numeric"
-                inputMode="numeric"
                 maxLength={6}
+                autoCapitalize="none"
+                autoCorrect={false}
                 autoFocus
               />
             </View>
