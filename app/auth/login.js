@@ -1,7 +1,3 @@
-// ===================================================================
-// app/auth/login.js — EduPlay design
-// תואם 1:1 ל-Login.jsx של האתר (frontend, branch: design/claudeDesign)
-// ===================================================================
 import { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
@@ -15,7 +11,7 @@ import { colors, fonts, radii } from '../../constants/theme';
 import { EpBrandMark, EpShape } from '../../components/EpBrand';
 
 export default function Login() {
-  const [idUser, setIdUser]   = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError]     = useState('');
   const [showPwd, setShowPwd] = useState(false);
@@ -26,13 +22,13 @@ export default function Login() {
 
   const handleSubmit = async () => {
     setError('');
-    if (!idUser.trim() || !password.trim()) {
-      return setError('יש למלא תעודת זהות וסיסמה');
+    if (!username.trim() || !password.trim()) {
+      return setError('יש למלא שם משתמש וסיסמה');
     }
     try {
       setLoading(true);
       const res = await axios.get(`${SERVER_URL}/auth/login`, {
-        params: { id: idUser, password },
+        params: { username, password },
       });
       await login(res.data.token);
       router.replace('/main/my-quizzes');
@@ -97,24 +93,23 @@ export default function Login() {
             <Text style={loginStyles.formKicker}>התחברות</Text>
             <Text style={loginStyles.formTitle}>ברוכים השבים</Text>
             <Text style={loginStyles.formSub}>
-              הזינו תעודת זהות וסיסמה כדי להמשיך
+              הזינו שם משתמש וסיסמה כדי להמשיך
             </Text>
           </View>
 
           <View style={{ gap: 14 }}>
-            {/* ID */}
+            {/* שם משתמש */}
             <View>
-              <Text style={loginStyles.label}>תעודת זהות</Text>
+              <Text style={loginStyles.label}>שם משתמש</Text>
               <TextInput
                 style={loginStyles.input}
-                placeholder="9 ספרות"
+                placeholder="הזינו שם משתמש"
                 placeholderTextColor={colors.inkMute}
-                keyboardType="numeric"
-                inputMode="numeric"
                 autoCapitalize="none"
+                autoComplete="username"
                 textAlign="right"
-                value={idUser}
-                onChangeText={setIdUser}
+                value={username}
+                onChangeText={setUsername}
               />
             </View>
 
@@ -133,6 +128,7 @@ export default function Login() {
                 placeholder="••••••••"
                 placeholderTextColor={colors.inkMute}
                 secureTextEntry={!showPwd}
+                autoComplete="current-password"
                 textAlign="right"
                 value={password}
                 onChangeText={setPassword}

@@ -1,8 +1,3 @@
-// ===================================================================
-// app/main/profile.js — EduPlay design
-// תואם ל-Profile.jsx של האתר (frontend, branch: design/claudeDesign)
-// הוספה: כפתור התנתקות (במובייל אין navbar עליון)
-// ===================================================================
 import { useState, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
@@ -18,12 +13,11 @@ import { EpShape } from '../../components/EpBrand';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function Profile() {
-  const { token, userId, logout } = useAuth();
+  const { token, username, logout } = useAuth();
   const router = useRouter();
 
-  const [data, setData] = useState({
-    id: '', name: '', email: '', phone: '', birthday: '', password: '',
-  });
+  // השרת מאפשר לעדכן רק את הסיסמה (PATCH /user/:username, allowedFields: ["password"])
+  const [password, setPassword] = useState('');
   const [loading, setLoading]   = useState(true);
   const [saving, setSaving]     = useState(false);
   const [showPwd, setShowPwd]   = useState(false);
@@ -32,19 +26,12 @@ export default function Profile() {
   const [confirmDel, setConfirmDel] = useState(false);
 
   useEffect(() => {
-    if (!userId) return;
+    if (!username) return;
     (async () => {
       try {
-        const res = await axios.get(`${SERVER_URL}/user/${userId}`, {
+        // קריאה לאימות שהמשתמש קיים בשרת (מציגה שגיאה אם לא)
+        await axios.get(`${SERVER_URL}/user/${username}`, {
           headers: { Authorization: `Bearer ${token}` },
-        });
-        setData({
-          id: res.data.id,
-          name: res.data.name || '',
-          email: res.data.email || '',
-          phone: res.data.phone || '',
-          birthday: res.data.birthday || '',
-          password: '',
         });
       } catch (err) {
         setError(err.response?.data?.message || 'שגיאה בטעינת הנתונים');
@@ -52,25 +39,22 @@ export default function Profile() {
         setLoading(false);
       }
     })();
-  }, [token, userId]);
-
-  const update = (k, v) => { setData(p => ({ ...p, [k]: v })); if (error) setError(''); };
+  }, [token, username]);
 
   const handleSave = async () => {
     setError('');
-    const updates = {
-      name: data.name, email: data.email,
-      phone: data.phone, birthday: data.birthday,
-    };
-    if (data.password) updates.password = data.password;
+    if (!password) {
+      setError('הקלידו סיסמה חדשה לפני השמירה');
+      return;
+    }
     try {
       setSaving(true);
-      await axios.patch(`${SERVER_URL}/user/${userId}`, updates, {
+      await axios.patch(`${SERVER_URL}/user/${username}`, { password }, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setSuccess(true);
       setTimeout(() => setSuccess(false), 2500);
-      setData(p => ({ ...p, password: '' }));
+      setPassword('');
     } catch (err) {
       setError(err.response?.data?.message || 'שגיאה בעדכון');
     } finally {
@@ -80,7 +64,7 @@ export default function Profile() {
 
   const handleDelete = async () => {
     try {
-      await axios.delete(`${SERVER_URL}/user/${userId}`, {
+      await axios.delete(`${SERVER_URL}/user/${username}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       logout();
@@ -111,8 +95,8 @@ export default function Profile() {
     );
   }
 
-  const initials = data.name
-    ? data.name.trim().split(' ').map(w => w[0]).join('').slice(0, 2)
+  const initials = username
+    ? username.trim().slice(0, 2).toUpperCase()
     : '?';
 
   return (
@@ -154,12 +138,8 @@ export default function Profile() {
             <View style={{ flex: 1, alignItems: 'flex-end', gap: 6 }}>
               <Text style={profStyles.heroLabel}>האזור האישי שלך</Text>
               <Text style={profStyles.heroName} numberOfLines={1}>
-                {data.name || '—'}
+                {username || '—'}
               </Text>
-              <View style={profStyles.idBadge}>
-                <Text style={profStyles.idLabel}>ת.ז.</Text>
-                <Text style={profStyles.idValue}>{data.id}</Text>
-              </View>
             </View>
           </View>
         </View>
@@ -170,7 +150,7 @@ export default function Profile() {
             <View style={profStyles.toastIcon}>
               <Text style={{ color: '#fff', fontWeight: '900', fontSize: 12 }}>✓</Text>
             </View>
-            <Text style={profStyles.toastText}>הפרטים עודכנו בהצלחה!</Text>
+            <Text style={profStyles.toastText}>הסיסמה עודכנה בהצלחה!</Text>
           </View>
         )}
 
@@ -187,14 +167,20 @@ export default function Profile() {
         <View style={profStyles.card}>
           <View>
             <Text style={profStyles.sectionKicker}>פרטי חשבון</Text>
-            <Text style={profStyles.sectionTitle}>עריכת פרטים</Text>
+            <Text style={profStyles.sectionTitle}>שינוי סיסמה</Text>
           </View>
 
           <View style={{ gap: 14 }}>
-            <Field label="שם מלא" value={data.name}     onChangeText={v => update('name', v)} placeholder="שם מלא"/>
-            <Field label="אימייל"  value={data.email}    onChangeText={v => update('email', v)} placeholder="name@example.com" keyboardType="email-address" autoCapitalize="none"/>
-            <Field label="טלפון"   value={data.phone}    onChangeText={v => update('phone', v)} placeholder="05X-XXXXXXX" keyboardType="phone-pad"/>
-            <Field label="תאריך לידה" value={data.birthday} onChangeText={v => update('birthday', v)} placeholder="DD/MM/YYYY"/>
+            {/* שם משתמש — לקריאה בלבד */}
+            <View>
+              <Text style={profStyles.label}>שם משתמש</Text>
+              <TextInput
+                style={[profStyles.input, profStyles.inputDisabled]}
+                value={username || ''}
+                editable={false}
+                textAlign="right"
+              />
+            </View>
 
             <View>
               <View style={profStyles.labelRow}>
@@ -209,8 +195,8 @@ export default function Profile() {
                 placeholderTextColor={colors.inkMute}
                 secureTextEntry={!showPwd}
                 textAlign="right"
-                value={data.password}
-                onChangeText={v => update('password', v)}
+                value={password}
+                onChangeText={(v) => { setPassword(v); if (error) setError(''); }}
               />
               <Text style={profStyles.hint}>
                 לפחות 8 תווים, אות גדולה, ספרה ותו מיוחד
@@ -279,21 +265,6 @@ export default function Profile() {
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
-  );
-}
-
-/* ── Field helper ───────────────────────────────────────── */
-function Field({ label, ...inputProps }) {
-  return (
-    <View>
-      <Text style={profStyles.label}>{label}</Text>
-      <TextInput
-        style={profStyles.input}
-        placeholderTextColor={colors.inkMute}
-        textAlign="right"
-        {...inputProps}
-      />
-    </View>
   );
 }
 
@@ -383,6 +354,9 @@ const profStyles = StyleSheet.create({
   idValue: {
     fontFamily: fonts.num, fontSize: 14, fontWeight: '700',
     letterSpacing: 1, color: colors.ans3,
+  },
+  inputDisabled: {
+    opacity: 0.55,
   },
 
   // ── Toast / Error ──

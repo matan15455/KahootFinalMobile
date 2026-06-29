@@ -1,15 +1,10 @@
-// ===================================================================
-// app/game/player/game.js — EduPlay design
-// תואם 1:1 ל-PlayerGame.jsx של האתר
-// phases: LOADING / QUESTION / SUMMARY / SCORES / END
-// עיצוב: cream/paper רקע, ANSWER_META tiles, verdict card, waiting pill
-// ===================================================================
 import { useState, useEffect, useRef } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
   ActivityIndicator, ScrollView, Dimensions,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import * as Speech from 'expo-speech';
 import { getSocket } from '../../../utils/socket';
 import { colors, fonts, radii } from '../../../constants/theme';
 import { EpShape, ANSWER_META } from '../../../components/EpBrand';
@@ -66,6 +61,7 @@ export default function PlayerGame() {
   const router     = useRouter();
   const { roomId } = useLocalSearchParams();
   const timerRef   = useRef(null);
+  const announcedRef = useRef(false); // האם כבר הכרזנו "הזמן נגמר" לשאלה הנוכחית
 
   useEffect(() => {
     const socket = getSocket();
@@ -82,13 +78,20 @@ export default function PlayerGame() {
 
       if (roomData.endsAt) {
         clearInterval(timerRef.current);
+        announcedRef.current = false; // טיימר חדש החל — מאפסים את ההכרזה
         const offset          = Date.now() - roomData.serverTime;
         const correctedEndsAt = roomData.endsAt + offset;
 
         const update = () => {
           const remaining = Math.max(0, Math.ceil((correctedEndsAt - Date.now()) / 1000));
           setTimeLeft(remaining);
-          if (remaining <= 0) clearInterval(timerRef.current);
+          if (remaining <= 0) {
+            clearInterval(timerRef.current);
+            if (!announcedRef.current && roomData.phase === 'QUESTION') {
+              announcedRef.current = true;
+              Speech.speak('הזמן נגמר', { language: 'he-IL' });
+            }
+          }
         };
         update();
         timerRef.current = setInterval(update, 250);
@@ -108,6 +111,7 @@ export default function PlayerGame() {
       socket.off('roomUpdated',  handleRoomUpdated);
       socket.off('scoreEarned',  handleScoreEarned);
       clearInterval(timerRef.current);
+      Speech.stop();
     };
   }, [roomId]);
 

@@ -1,8 +1,3 @@
-// ===================================================================
-// app/auth/register.js — EduPlay design
-// תואם 1:1 ל-Register.jsx של האתר (frontend, branch: design/claudeDesign)
-// שינוי לוגי: הסרת confirmPassword (האתר לא משתמש בו)
-// ===================================================================
 import { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
@@ -16,12 +11,9 @@ import { colors, fonts, radii } from '../../constants/theme';
 import { EpBrandMark, EpShape } from '../../components/EpBrand';
 
 export default function Register() {
-  const [idUser, setIdUser]     = useState('');
-  const [name, setName]         = useState('');
-  const [email, setEmail]       = useState('');
-  const [phone, setPhone]       = useState('');
-  const [birthday, setBirthday] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername]               = useState('');
+  const [password, setPassword]                 = useState('');
+  const [confirmPassword, setConfirmPassword]   = useState('');
   const [showPwd, setShowPwd]   = useState(false);
   const [error, setError]       = useState('');
   const [loading, setLoading]   = useState(false);
@@ -31,20 +23,31 @@ export default function Register() {
 
   const handleSubmit = async () => {
     setError('');
-    if (!idUser.trim() || !name.trim() || !email.trim() ||
-        !phone.trim() || !birthday.trim() || !password.trim()) {
-      return setError('יש למלא את כל השדות');
+
+    if (!username.trim() || !password.trim() || !confirmPassword.trim()) {
+      return setError('יש למלא שם משתמש וסיסמה');
     }
+
+    if (password !== confirmPassword) {
+      return setError('הסיסמאות אינן תואמות');
+    }
+
     try {
       setLoading(true);
+
       await axios.post(`${SERVER_URL}/auth/register`, {
-        id: idUser, name, email, phone, birthday, password,
+        username,
+        password,
       });
+
+      // התחברות אוטומטית אחרי הרשמה
       const res = await axios.get(`${SERVER_URL}/auth/login`, {
-        params: { id: idUser, password },
+        params: { username, password },
       });
+
       await login(res.data.token);
       router.replace('/main/my-quizzes');
+
     } catch (err) {
       setError(err.response?.data?.message || 'שגיאה בהרשמה');
     } finally {
@@ -104,55 +107,20 @@ export default function Register() {
         <View style={regStyles.form}>
           <View>
             <Text style={regStyles.formKicker}>הרשמה</Text>
-            <Text style={regStyles.formTitle}>יוצרים חשבון</Text>
+            <Text style={regStyles.formTitle}>צור חשבון</Text>
             <Text style={regStyles.formSub}>
-              כל השדות חובה · יידרשו 30 שניות
+              רק שם משתמש וסיסמה · 30 שניות
             </Text>
           </View>
 
           <View style={{ gap: 14 }}>
-            {/* שם מלא */}
+            {/* שם משתמש */}
             <Field
-              label="שם מלא"
-              placeholder="לדוגמה: מתן עמרם"
-              value={name} onChangeText={setName}
-              autoComplete="name"
-            />
-
-            {/* ת.ז + תאריך לידה — 2 עמודות */}
-            <View style={{ flexDirection: 'row-reverse', gap: 12 }}>
-              <View style={{ flex: 1 }}>
-                <Field
-                  label="תעודת זהות"
-                  placeholder="9 ספרות"
-                  value={idUser} onChangeText={setIdUser}
-                  keyboardType="numeric"
-                />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Field
-                  label="תאריך לידה"
-                  placeholder="DD/MM/YYYY"
-                  value={birthday} onChangeText={setBirthday}
-                />
-              </View>
-            </View>
-
-            {/* אימייל */}
-            <Field
-              label="אימייל"
-              placeholder="name@example.com"
-              value={email} onChangeText={setEmail}
-              keyboardType="email-address"
+              label="שם משתמש"
+              placeholder="בחרו שם משתמש"
+              value={username} onChangeText={setUsername}
+              autoComplete="username"
               autoCapitalize="none"
-            />
-
-            {/* טלפון */}
-            <Field
-              label="טלפון"
-              placeholder="05X-XXXXXXX"
-              value={phone} onChangeText={setPhone}
-              keyboardType="phone-pad"
             />
 
             {/* סיסמה */}
@@ -170,6 +138,7 @@ export default function Register() {
                 placeholder="לפחות 8 תווים"
                 placeholderTextColor={colors.inkMute}
                 secureTextEntry={!showPwd}
+                autoComplete="new-password"
                 textAlign="right"
                 value={password}
                 onChangeText={setPassword}
@@ -178,6 +147,15 @@ export default function Register() {
                 לפחות 8 תווים, אות גדולה, ספרה ותו מיוחד
               </Text>
             </View>
+
+            {/* אימות סיסמה */}
+            <Field
+              label="אימות סיסמה"
+              placeholder="הקלידו את הסיסמה שוב"
+              value={confirmPassword} onChangeText={setConfirmPassword}
+              secureTextEntry={!showPwd}
+              autoComplete="new-password"
+            />
 
             {error ? (
               <View style={regStyles.errorBox}>
@@ -248,7 +226,6 @@ const regStyles = StyleSheet.create({
     overflow: 'hidden',
   },
   blob: { position: 'absolute', borderRadius: 9999 },
-  // צבעי blobs שונים מ-Login (כמו באתר): ans-1 (coral) + ans-2 (violet)
   blobA: { top: -80, left: -60, width: 220, height: 220, backgroundColor: colors.ans1, opacity: 0.32 },
   blobB: { bottom: -120, right: 40, width: 200, height: 200, backgroundColor: colors.ans2, opacity: 0.4 },
 

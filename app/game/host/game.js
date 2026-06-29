@@ -1,9 +1,3 @@
-// ===================================================================
-// app/game/host/game.js — EduPlay design
-// תואם 1:1 ל-HostGame.jsx של האתר
-// phases: LOADING / QUESTION / SUMMARY / SCORES / END
-// עיצוב: cream/paper רקע, ink text, ANSWER_META tiles, timer SVG
-// ===================================================================
 import { useState, useEffect, useRef } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
@@ -17,12 +11,9 @@ import ScoreBoard from '../../../components/ScoreBoard';
 
 const { width } = Dimensions.get('window');
 
-/* ─────────────────────────────────────────────────────────
-   Timer ring — SVG circle progress כמו באתר
-───────────────────────────────────────────────────────── */
 function TimerRing({ timeLeft, totalTime, size = 120 }) {
   const r         = 45;
-  const circ      = 2 * Math.PI * r; // ≈ 283
+  const circ      = 2 * Math.PI * r; 
   const progress  = totalTime > 0 ? timeLeft / totalTime : 0;
   const offset    = circ - progress * circ;
 
@@ -79,6 +70,7 @@ export default function HostGame() {
   const router    = useRouter();
   const { roomId } = useLocalSearchParams();
   const timerRef  = useRef(null);
+  const announcedRef = useRef(false); // האם כבר הכרזנו "הזמן נגמר" לשאלה הנוכחית
 
   useEffect(() => {
     const socket = getSocket();
@@ -90,13 +82,19 @@ export default function HostGame() {
 
       if (roomData.endsAt) {
         clearInterval(timerRef.current);
+        announcedRef.current = false; // טיימר חדש החל — מאפסים את ההכרזה
         const offset         = Date.now() - roomData.serverTime;
         const correctedEndsAt = roomData.endsAt + offset;
 
         const update = () => {
           const remaining = Math.max(0, Math.ceil((correctedEndsAt - Date.now()) / 1000));
           setTimeLeft(remaining);
-          if (remaining <= 0) clearInterval(timerRef.current);
+          if (remaining <= 0) {
+            clearInterval(timerRef.current);
+            if (!announcedRef.current) {
+              announcedRef.current = true;
+            }
+          }
         };
         update();
         timerRef.current = setInterval(update, 250);

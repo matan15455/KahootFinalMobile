@@ -145,14 +145,13 @@ export default function JoinRoom() {
           <View>
             <View style={joinStyles.kicker}>
               <EpShape kind="hex" size={14} color={colors.ans2}/>
-              <Text style={joinStyles.kickerText}>הצטרפות לחדר</Text>
             </View>
             <Text style={joinStyles.title}>
-              מצטרפים{'\n'}
-              <Text style={{ color: colors.primary }}>למשחק.</Text>
+              הצטרף{'\n'}
+              <Text style={{ color: colors.primary }}>לחדר.</Text>
             </Text>
             <Text style={joinStyles.sub}>
-              הזינו את קוד החדר שקיבלתם מהמנחה ובחרו לעצמכם שם.
+             הזן את קוד החדר שקיבלת מהמנחה ובחר לעצמך שם.
             </Text>
           </View>
 
@@ -210,11 +209,6 @@ export default function JoinRoom() {
             </Text>
             <Text style={joinStyles.submitArrow}>←</Text>
           </TouchableOpacity>
-
-          <Text style={joinStyles.footer}>
-            אין לך חשבון? <Text style={{ color: colors.ink, fontWeight: '700' }}>לא צריך</Text> —
-            המנחה יוצר את החדר, אתם רק מצטרפים.
-          </Text>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
