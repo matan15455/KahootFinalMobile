@@ -53,8 +53,12 @@ export function EpShape({ kind, color = '#fff', size = 22 }) {
 
 // answer letter → color/shape/ink map
 export const ANSWER_META = [
-  { letter: 'א', color: colors.ans1, ink: colors.ans1Ink, shape: 'burst' },
-  { letter: 'ב', color: colors.ans2, ink: colors.ans2Ink, shape: 'hex'   },
-  { letter: 'ג', color: colors.ans3, ink: colors.ans3Ink, shape: 'plus'  },
-  { letter: 'ד', color: colors.ans4, ink: colors.ans4Ink, shape: 'wave'  },
+  { letter: 'א', color: colors.ans1, ink: colors.ans1Ink, inkColor: colors.ans1Ink, shape: 'burst', textOn: '#fff'     },
+  { letter: 'ב', color: colors.ans2, ink: colors.ans2Ink, inkColor: colors.ans2Ink, shape: 'hex',   textOn: '#fff'     },
+  { letter: 'ג', color: colors.ans3, ink: colors.ans3Ink, inkColor: colors.ans3Ink, shape: 'plus',  textOn: colors.ink },
+  { letter: 'ד', color: colors.ans4, ink: colors.ans4Ink, inkColor: colors.ans4Ink, shape: 'wave',  textOn: '#0c2a2c' },
+  { letter: 'ה', color: colors.ans5, ink: colors.ans5Ink, inkColor: colors.ans5Ink, shape: 'burst', textOn: '#fff'     },
+  { letter: 'ו', color: colors.ans6, ink: colors.ans6Ink, inkColor: colors.ans6Ink, shape: 'hex',   textOn: '#fff'     },
+  { letter: 'ז', color: colors.ans7, ink: colors.ans7Ink, inkColor: colors.ans7Ink, shape: 'plus',  textOn: '#fff'     },
+  { letter: 'ח', color: colors.ans8, ink: colors.ans8Ink, inkColor: colors.ans8Ink, shape: 'wave',  textOn: '#fff'     },
 ];

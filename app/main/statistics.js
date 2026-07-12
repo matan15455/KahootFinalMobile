@@ -93,7 +93,6 @@ export default function Statistics() {
       >
         {/* ── כותרת ── */}
         <View style={s.head}>
-          <Text style={s.title}>המשחקים שלי</Text>
         </View>
 
         {/* ── סיכום ── */}
@@ -108,14 +107,13 @@ export default function Statistics() {
         {sessions.length === 0 ? (
           /* ── Empty ── */
           <View style={s.empty}>
-            <Text style={s.emptyIcon}>📊</Text>
-            <Text style={s.emptyTitle}>אין משחקים עדיין</Text>
-            <Text style={s.emptySub}>הפעילו חידון וסטטיסטיקות המשחק יופיעו כאן</Text>
+            <Text style={s.emptyTitle}> אין הפעלות עדיין</Text>
+            <Text style={s.emptySub}>הפעל חידון וסטטיסטיקות המשחק יופיעו כאן</Text>
             <TouchableOpacity
               style={s.emptyBtn}
               onPress={() => router.push('/main/my-quizzes')}
             >
-              <Text style={s.emptyBtnText}>לחידונים שלי ←</Text>
+              <Text style={s.emptyBtnText}>לחידונים שלי</Text>
             </TouchableOpacity>
           </View>
         ) : (

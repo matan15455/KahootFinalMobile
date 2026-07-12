@@ -171,12 +171,6 @@ export default function Login() {
                 צור חשבון
               </Text>
             </Text>
-            <Text
-              style={[loginStyles.footerText, loginStyles.link, { marginTop: 4 }]}
-              onPress={() => router.push('/main/join-room')}
-            >
-              הצטרף לחדר ללא הרשמה 
-            </Text>
           </View>
         </View>
       </ScrollView>

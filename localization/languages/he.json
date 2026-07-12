@@ -12,7 +12,7 @@
   "saveChanges": "שמור שינויים",
   "passwordUpdated": "הסיסמה עודכנה בהצלחה!",
   "deleteAccount": "מחיקת חשבון",
-  "deleteAccountDesc": "פעולה זו בלתי הפיכה — כל החידונים והנתונים שלך יימחקו לצמיתות.",
+  "deleteAccountDesc": " הנתונים שלך יימחקו לצמיתות.",
   "sure": "בטוח לחלוטין?",
   "yesDelete": "כן, מחק",
   "cancel": "ביטול",

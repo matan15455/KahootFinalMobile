@@ -24,7 +24,11 @@ export const colors = {
   ans2: '#4F3FF5', ans2Ink: '#2A1FB8', // violet
   ans3: '#B8E142', ans3Ink: '#6B8413', // lime
   ans4: '#2BC9D0', ans4Ink: '#137A82', // aqua
-
+  ans5: '#9B59B6', ans5Ink: '#6C3483',
+  ans6: '#E67E22', ans6Ink: '#A04000',
+  ans7: '#1ABC9C', ans7Ink: '#0E6655',
+  ans8: '#E74C3C', ans8Ink: '#922B21',
+  
   // Semantic
   ok:   '#1E9E5F',
   warn: '#E59C00',
@@ -58,6 +62,10 @@ export const darkColors = {
   ans2: '#4F3FF5', ans2Ink: '#2A1FB8',
   ans3: '#B8E142', ans3Ink: '#6B8413',
   ans4: '#2BC9D0', ans4Ink: '#137A82',
+  ans5: '#9B59B6', ans5Ink: '#6C3483',
+  ans6: '#E67E22', ans6Ink: '#A04000',
+  ans7: '#1ABC9C', ans7Ink: '#0E6655',
+  ans8: '#E74C3C', ans8Ink: '#922B21',
 
   ok:   '#2ECC81',
   warn: '#F5B942',

@@ -129,8 +129,7 @@ export default function MyQuizzes() {
 
       <Text style={myqStyles.emptyTitle}>אין כאן עדיין חידונים</Text>
       <Text style={myqStyles.emptySub}>
-        צרו את החידון הראשון שלכם ב-2 דקות —{'\n'}
-        ידנית עם 4 תשובות לשאלה, או בעזרת בינה מלאכותית.
+        לא יצרת חידונים עדיין
       </Text>
 
       <View style={{ flexDirection: 'column', gap: 10, alignItems: 'stretch', width: '100%' }}>
@@ -140,14 +139,14 @@ export default function MyQuizzes() {
           onPress={() => router.push('/main/create-quiz')}
         >
           <Text style={myqStyles.ctaPlus}>+</Text>
-          <Text style={myqStyles.ctaText}>צרו חידון ראשון</Text>
+          <Text style={myqStyles.ctaText}>צור חידון ראשון</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[myqStyles.cta, myqStyles.ctaGhost]}
           activeOpacity={0.85}
           onPress={() => router.push('/main/join-room')}
         >
-          <Text style={[myqStyles.ctaText, { color: colors.ink }]}>או הצטרפו לחדר של חבר</Text>
+          <Text style={[myqStyles.ctaText, { color: colors.ink }]}>או הצטרף לחדר  </Text>
         </TouchableOpacity>
       </View>
     </View>

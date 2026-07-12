@@ -11,6 +11,10 @@ import { colors, fonts, radii } from '../../constants/theme';
 import { EpBrandMark, EpShape } from '../../components/EpBrand';
 
 export default function Register() {
+
+  const usernameRegex = /^[A-Za-z0-9]+$/;
+  const passwordRegex = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
+
   const [username, setUsername]               = useState('');
   const [password, setPassword]                 = useState('');
   const [confirmPassword, setConfirmPassword]   = useState('');
@@ -26,6 +30,14 @@ export default function Register() {
 
     if (!username.trim() || !password.trim() || !confirmPassword.trim()) {
       return setError('יש למלא שם משתמש וסיסמה');
+    }
+
+    if (!usernameRegex.test(username.trim())) {
+      return setError('שם משתמש יכול להכיל רק אותיות באנגלית וספרות');
+    }
+
+    if (!passwordRegex.test(password)) {
+      return setError('הסיסמה חייבת לכלול לפחות 8 תווים, אות גדולה אחת וספרה אחת');
     }
 
     if (password !== confirmPassword) {
@@ -115,6 +127,9 @@ export default function Register() {
               autoComplete="username"
               autoCapitalize="none"
             />
+            <Text style={regStyles.hint}>
+                אותיות באנגלית וספרות בלבד
+            </Text>
 
             {/* סיסמה */}
             <View>
@@ -137,7 +152,7 @@ export default function Register() {
                 onChangeText={setPassword}
               />
               <Text style={regStyles.hint}>
-                לפחות 8 תווים, אות גדולה, ספרה ותו מיוחד
+                לפחות 8 תווים, אות גדולה אחת וספרה אחת
               </Text>
             </View>
 

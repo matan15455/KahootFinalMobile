@@ -540,8 +540,6 @@ export default function CreateManual() {
                     <EpShape key={i} kind={m.shape} color={m.color} size={32} />
                   ))}
                 </View>
-                <Text style={mainStyles.emptyTitle}>בואו נוסיף שאלה ראשונה</Text>
-                <Text style={mainStyles.emptySub}>שאלה אחת עם 4 תשובות מספיקה כדי להתחיל.</Text>
                 <TouchableOpacity style={mainStyles.primaryBtnLg} onPress={() => setAddingQuestion(true)}>
                   <Text style={mainStyles.primaryBtnLgPlus}>+</Text>
                   <Text style={mainStyles.primaryBtnLgText}>שאלה ראשונה</Text>

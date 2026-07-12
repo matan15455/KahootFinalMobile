@@ -225,7 +225,6 @@ export default function Profile() {
               ? <ActivityIndicator color="#fff"/>
               : <>
                   <Text style={profStyles.saveText}>{i18n.t('saveChanges')}</Text>
-                  <Text style={profStyles.saveArrow}>←</Text>
                 </>
             }
           </TouchableOpacity>
