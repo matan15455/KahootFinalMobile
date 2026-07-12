@@ -14,7 +14,7 @@ import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
 import { SERVER_URL } from '../../utils/socket';
-import { colors, fonts, radii } from '../../constants/theme';
+import {fonts, radii , useThemeColors } from '../../constants/theme';
 import EpQuizCard from '../../components/EpQuizCard';
 import { EpShape } from '../../components/EpBrand';
 
@@ -23,11 +23,15 @@ export default function MyQuizzes() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  const colors = useThemeColors();
+
+  const myqStyles = getmyqStyles(colors);
+
   const { token } = useAuth();
   const router = useRouter();
 
   const { width, height } = useWindowDimensions();
- const isLandscape = width > height;
+  const isLandscape = width > height;
 
   const fetchQuizzes = async () => {
     try {
@@ -183,7 +187,7 @@ export default function MyQuizzes() {
   );
 }
 
-const myqStyles = StyleSheet.create({
+const getmyqStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.cream,

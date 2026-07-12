@@ -8,11 +8,15 @@ import axios from 'axios';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
 import { SERVER_URL } from '../../utils/socket';
-import { colors, fonts, radii } from '../../constants/theme';
+import { colors, fonts, radii , useThemeColors } from '../../constants/theme';
 import { EpShape } from '../../components/EpBrand';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function Profile() {
+  const colors = useThemeColors();
+
+  const profStyles = getProfStyles(colors);
+
   const { token, username, logout } = useAuth();
   const router = useRouter();
 
@@ -274,7 +278,7 @@ export default function Profile() {
   );
 }
 
-const profStyles = StyleSheet.create({
+const getProfStyles = (colors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.cream },
   center: { justifyContent: 'center', alignItems: 'center', gap: 16 },
   loaderText: {

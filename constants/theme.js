@@ -2,6 +2,7 @@
 // EduPlay — Mobile Design Tokens (React Native)
 // תאום מלא לטוקנים של האתר (frontend/src/styles/eduplay-tokens.css)
 // ===================================================================
+import { useColorScheme } from 'react-native';
 
 export const colors = {
   // Surfaces
@@ -38,6 +39,43 @@ export const colors = {
   blackAlpha08: 'rgba(20,18,26,0.08)',
   blackAlpha16: 'rgba(20,18,26,0.16)',
 };
+
+export const darkColors = {
+  cream:    '#14121A',
+  cream2:   '#1E1B27',
+  paper:    '#211D2B',
+  ink:      '#F5EFE4',
+  ink2:     '#EDE7F7',
+  ink3:     '#B8B4C8',
+  inkMute:  '#8A8699',
+
+  // Brand — נשארים זהים, כדי לשמור על זהות המותג עקבית בשני המצבים
+  primary:     '#4F3FF5',
+  primaryDeep: '#8A7CFF',
+  primarySoft: '#2A2450',
+
+  ans1: '#FF5C3C', ans1Ink: '#B23A1F',
+  ans2: '#4F3FF5', ans2Ink: '#2A1FB8',
+  ans3: '#B8E142', ans3Ink: '#6B8413',
+  ans4: '#2BC9D0', ans4Ink: '#137A82',
+
+  ok:   '#2ECC81',
+  warn: '#F5B942',
+  bad:  '#FF6B5C',
+
+  whiteAlpha10: 'rgba(255,255,255,0.07)',
+  whiteAlpha20: 'rgba(255,255,255,0.13)',
+  whiteAlpha70: 'rgba(255,255,255,0.78)',
+
+  blackAlpha08: 'rgba(255,255,255,0.10)',
+  blackAlpha16: 'rgba(255,255,255,0.18)',
+};
+
+// hook פשוט - מחזיר את פלטת הצבעים הנכונה לפי הגדרת המכשיר
+export function useThemeColors() {
+  const scheme = useColorScheme(); // 'light' | 'dark' | null
+  return scheme === 'dark' ? darkColors : colors;
+}
 
 export const radii = {
   xs: 8,

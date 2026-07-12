@@ -11,7 +11,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { getSocket } from '../../utils/socket';
-import { colors, fonts, radii } from '../../constants/theme';
+import { fonts, radii ,useThemeColors} from '../../constants/theme';
 import { EpShape } from '../../components/EpBrand';
 
 export default function JoinRoom() {
@@ -22,6 +22,10 @@ export default function JoinRoom() {
   const [room, setRoom]         = useState(null);
 
   const router = useRouter();
+
+  const colors = useThemeColors();
+  const joinStyles = getJoinStyles(colors);
+
   const roomRef = useRef(null);
   useEffect(() => { roomRef.current = room; }, [room]);
 
@@ -211,7 +215,7 @@ export default function JoinRoom() {
   );
 }
 
-const joinStyles = StyleSheet.create({
+const getJoinStyles = (colors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.cream },
   scroll: {
     flexGrow: 1, justifyContent: 'center',
