@@ -11,6 +11,7 @@ import { SERVER_URL } from '../../utils/socket';
 import { colors, fonts, radii , useThemeColors } from '../../constants/theme';
 import { EpShape } from '../../components/EpBrand';
 import { Ionicons } from '@expo/vector-icons';
+import i18n from '../../localization/translation';
 
 export default function Profile() {
   const colors = useThemeColors();
@@ -41,7 +42,7 @@ export default function Profile() {
           headers: { Authorization: `Bearer ${token}` },
         });
       } catch (err) {
-        setError(err.response?.data?.message || 'שגיאה בטעינת הנתונים');
+        setError(err.response?.data?.message || i18n.t('errorLoading'));
       } finally {
         setLoading(false);
       }
@@ -51,7 +52,7 @@ export default function Profile() {
   const handleSave = async () => {
     setError('');
     if (!password) {
-      setError('הקלידו סיסמה חדשה לפני השמירה');
+      setError(i18n.t('errorEmptyPassword'));
       return;
     }
     try {
@@ -63,7 +64,7 @@ export default function Profile() {
       setTimeout(() => setSuccess(false), 2500);
       setPassword('');
     } catch (err) {
-      setError(err.response?.data?.message || 'שגיאה בעדכון');
+      setError(err.response?.data?.message || i18n.t('errorUpdating'));
     } finally {
       setSaving(false);
     }
@@ -77,15 +78,15 @@ export default function Profile() {
       logout();
       router.replace('/auth/login');
     } catch (err) {
-      setError(err.response?.data?.message || 'שגיאה במחיקה');
+      setError(err.response?.data?.message || i18n.t('errorDeleting'));
     }
   };
 
   const handleLogout = () => {
-    Alert.alert('התנתקות', 'בטוח שברצונך להתנתק?', [
-      { text: 'ביטול', style: 'cancel' },
+    Alert.alert(i18n.t('logoutTitle'), i18n.t('logoutConfirm'), [
+      { text: i18n.t('cancel'), style: 'cancel' },
       {
-        text: 'התנתק', onPress: () => {
+        text: i18n.t('logout'), onPress: () => {
           logout();
           router.replace('/auth/login');
         },
@@ -97,7 +98,7 @@ export default function Profile() {
     return (
       <View style={[profStyles.container, profStyles.center]}>
         <ActivityIndicator size="large" color={colors.primary}/>
-        <Text style={profStyles.loaderText}>טוען פרטים…</Text>
+        <Text style={profStyles.loaderText}>{i18n.t('loadingDetails')}</Text>
       </View>
     );
   }
@@ -146,7 +147,7 @@ export default function Profile() {
             </View>
 
             <View style={{ flex: 1, alignItems: 'flex-end', gap: 6 }}>
-              <Text style={profStyles.heroLabel}>האזור האישי שלך</Text>
+              <Text style={profStyles.heroLabel}>{i18n.t('personalArea')}</Text>
               <Text style={profStyles.heroName} numberOfLines={1}>
                 {username || '—'}
               </Text>
@@ -160,7 +161,7 @@ export default function Profile() {
             <View style={profStyles.toastIcon}>
               <Text style={{ color: '#fff', fontWeight: '900', fontSize: 12 }}>✓</Text>
             </View>
-            <Text style={profStyles.toastText}>הסיסמה עודכנה בהצלחה!</Text>
+            <Text style={profStyles.toastText}>{i18n.t('passwordUpdated')}</Text>
           </View>
         )}
 
@@ -176,14 +177,14 @@ export default function Profile() {
         {/* ══ Form Card ══ */}
         <View style={profStyles.card}>
           <View>
-            <Text style={profStyles.sectionKicker}>פרטי חשבון</Text>
-            <Text style={profStyles.sectionTitle}>שינוי סיסמה</Text>
+            <Text style={profStyles.sectionKicker}>{i18n.t('accountDetails')}</Text>
+            <Text style={profStyles.sectionTitle}>{i18n.t('changePassword')}</Text>
           </View>
 
           <View style={{ gap: 14 }}>
             {/* שם משתמש — לקריאה בלבד */}
             <View>
-              <Text style={profStyles.label}>שם משתמש</Text>
+              <Text style={profStyles.label}>{i18n.t('username')}</Text>
               <TextInput
                 style={[profStyles.input, profStyles.inputDisabled]}
                 value={username || ''}
@@ -194,14 +195,14 @@ export default function Profile() {
 
             <View>
               <View style={profStyles.labelRow}>
-                <Text style={profStyles.label}>סיסמה חדשה</Text>
+                <Text style={profStyles.label}>{i18n.t('newPassword')}</Text>
                 <TouchableOpacity onPress={() => setShowPwd(s => !s)}>
-                  <Text style={profStyles.toggle}>{showPwd ? 'הסתר' : 'הצג'}</Text>
+                  <Text style={profStyles.toggle}>{showPwd ? i18n.t('hide') : i18n.t('show')}</Text>
                 </TouchableOpacity>
               </View>
               <TextInput
                 style={profStyles.input}
-                placeholder="השאר ריק אם אין שינוי"
+                placeholder={i18n.t('passwordPlaceholder')}
                 placeholderTextColor={colors.inkMute}
                 secureTextEntry={!showPwd}
                 textAlign="right"
@@ -209,7 +210,7 @@ export default function Profile() {
                 onChangeText={(v) => { setPassword(v); if (error) setError(''); }}
               />
               <Text style={profStyles.hint}>
-                לפחות 8 תווים, אות גדולה, ספרה ותו מיוחד
+                {i18n.t('passwordHint')}
               </Text>
             </View>
           </View>
@@ -223,7 +224,7 @@ export default function Profile() {
             {saving
               ? <ActivityIndicator color="#fff"/>
               : <>
-                  <Text style={profStyles.saveText}>שמור שינויים</Text>
+                  <Text style={profStyles.saveText}>{i18n.t('saveChanges')}</Text>
                   <Text style={profStyles.saveArrow}>←</Text>
                 </>
             }
@@ -233,9 +234,9 @@ export default function Profile() {
         {/* ══ Danger Zone ══ */}
         <View style={profStyles.danger}>
           <View style={{ marginBottom: 14 }}>
-            <Text style={profStyles.dangerTitle}>מחיקת חשבון</Text>
+            <Text style={profStyles.dangerTitle}>{i18n.t('deleteAccount')}</Text>
             <Text style={profStyles.dangerDesc}>
-              פעולה זו בלתי הפיכה — כל החידונים והנתונים שלך יימחקו לצמיתות.
+              {i18n.t('deleteAccountDesc')}
             </Text>
           </View>
 
@@ -245,11 +246,11 @@ export default function Profile() {
               activeOpacity={0.85}
               onPress={() => setConfirmDel(true)}
             >
-              <Text style={profStyles.delBtnText}>מחק חשבון</Text>
+              <Text style={profStyles.delBtnText}>{i18n.t('deleteAccount')}</Text>
             </TouchableOpacity>
           ) : (
             <View style={{ gap: 10 }}>
-              <Text style={profStyles.confirmQ}>בטוח לחלוטין?</Text>
+              <Text style={profStyles.confirmQ}>{i18n.t('sure')}</Text>
               <View style={{ flexDirection: 'row-reverse', gap: 8 }}>
                 <TouchableOpacity
                   style={[profStyles.confirmBtn, profStyles.confirmYes]}
@@ -257,7 +258,7 @@ export default function Profile() {
                   onPress={handleDelete}
                 >
                   <Text style={{ color: '#fff', fontFamily: fonts.display, fontWeight: '700', fontSize: 13 }}>
-                    כן, מחק
+                    {i18n.t('yesDelete')}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -266,7 +267,7 @@ export default function Profile() {
                   onPress={() => setConfirmDel(false)}
                 >
                   <Text style={{ color: colors.ink3, fontFamily: fonts.display, fontWeight: '600', fontSize: 13 }}>
-                    ביטול
+                    {i18n.t('cancel')}
                   </Text>
                 </TouchableOpacity>
               </View>
