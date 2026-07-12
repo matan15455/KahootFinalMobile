@@ -7,7 +7,7 @@
 import { useState, useCallback } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity,
-  ActivityIndicator, RefreshControl, Alert, StyleSheet,
+  ActivityIndicator, RefreshControl, Alert, StyleSheet,useWindowDimensions
 } from 'react-native';
 import axios from 'axios';
 import { useRouter } from 'expo-router';
@@ -25,6 +25,9 @@ export default function MyQuizzes() {
 
   const { token } = useAuth();
   const router = useRouter();
+
+  const { width, height } = useWindowDimensions();
+ const isLandscape = width > height;
 
   const fetchQuizzes = async () => {
     try {
@@ -163,7 +166,10 @@ export default function MyQuizzes() {
         )}
         ListHeaderComponent={renderHeader}
         ListEmptyComponent={renderEmpty}
-        contentContainerStyle={myqStyles.list}
+        contentContainerStyle={[
+          myqStyles.list,
+          isLandscape && { maxWidth: 480, alignSelf: 'center', width: '100%' },
+        ]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
   KeyboardAvoidingView, Platform, ActivityIndicator, Alert,
-  StyleSheet,
+  StyleSheet,useWindowDimensions
 } from 'react-native';
 import axios from 'axios';
 import { useRouter } from 'expo-router';
@@ -15,6 +15,9 @@ import { Ionicons } from '@expo/vector-icons';
 export default function Profile() {
   const { token, username, logout } = useAuth();
   const router = useRouter();
+
+  const { width, height } = useWindowDimensions();
+  const isLandscape = width > height;
 
   // השרת מאפשר לעדכן רק את הסיסמה (PATCH /user/:username, allowedFields: ["password"])
   const [password, setPassword] = useState('');
@@ -105,7 +108,10 @@ export default function Profile() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView
-        contentContainerStyle={profStyles.scroll}
+        contentContainerStyle={[
+          profStyles.scroll,
+          isLandscape && { maxWidth: 480, alignSelf: 'center', width: '100%' },
+        ]}
         showsVerticalScrollIndicator={false}
       >
         {/* ══ Hero Card (Avatar + שם + ת.ז) ══ */}
