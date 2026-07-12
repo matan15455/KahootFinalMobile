@@ -93,7 +93,6 @@ export default function Statistics() {
       >
         {/* ── כותרת ── */}
         <View style={s.head}>
-          <Text style={s.kicker}>היסטוריה</Text>
           <Text style={s.title}>המשחקים שלי</Text>
         </View>
 

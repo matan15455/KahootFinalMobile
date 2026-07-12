@@ -61,14 +61,16 @@ export default function PlayerGame() {
   const router     = useRouter();
   const { roomId } = useLocalSearchParams();
   const timerRef   = useRef(null);
-  const announcedRef = useRef(false); // האם כבר הכרזנו "הזמן נגמר" לשאלה הנוכחית
+  const prevPhaseRef = useRef(null); // הפאזה הקודמת שהתקבלה 
 
   useEffect(() => {
     const socket = getSocket();
-    if (!socket || !roomId) return;
+    if (!socket || !roomId) 
+      return;
 
     const handleRoomUpdated = (roomData) => {
-      if (roomData.roomId !== roomId) return;
+      if (roomData.roomId !== roomId) 
+        return;
       setRoom(roomData);
 
       if (roomData.phase === 'QUESTION') {
@@ -76,10 +78,21 @@ export default function PlayerGame() {
         setEarned(null);
       }
 
+      // ההכרזה - פעם אחת בדיוק, כשעוברים מ-QUESTION לפאזה אחרת
+      if (prevPhaseRef.current === 'QUESTION' && roomData.phase !== 'QUESTION') {
+        Speech.stop();
+        Speech.speak('הזמן נגמר', {
+          language: 'he-IL',
+          onError: (err) => console.warn('Speech error:', err),
+        });
+      }
+      
+      prevPhaseRef.current = roomData.phase;
+
+      // הטיימר - רק לתצוגה (TimerRing), לא נוגע בהכרזה
       if (roomData.endsAt) {
         clearInterval(timerRef.current);
-        announcedRef.current = false; // טיימר חדש החל — מאפסים את ההכרזה
-        const offset          = Date.now() - roomData.serverTime;
+        const offset = Date.now() - roomData.serverTime;
         const correctedEndsAt = roomData.endsAt + offset;
 
         const update = () => {
@@ -87,12 +100,9 @@ export default function PlayerGame() {
           setTimeLeft(remaining);
           if (remaining <= 0) {
             clearInterval(timerRef.current);
-            if (!announcedRef.current && roomData.phase === 'QUESTION') {
-              announcedRef.current = true;
-              Speech.speak('הזמן נגמר', { language: 'he-IL' });
-            }
           }
         };
+
         update();
         timerRef.current = setInterval(update, 250);
       } else {

@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { getSocket } from '../../../utils/socket';
+import * as Speech from 'expo-speech';
 import { colors, fonts, radii } from '../../../constants/theme';
 import { EpShape, ANSWER_META } from '../../../components/EpBrand';
 import ScoreBoard from '../../../components/ScoreBoard';
@@ -70,7 +71,7 @@ export default function HostGame() {
   const router    = useRouter();
   const { roomId } = useLocalSearchParams();
   const timerRef  = useRef(null);
-  const announcedRef = useRef(false); // האם כבר הכרזנו "הזמן נגמר" לשאלה הנוכחית
+  const prevPhaseRef = useRef(null);
 
   useEffect(() => {
     const socket = getSocket();
@@ -80,9 +81,17 @@ export default function HostGame() {
       if (roomData.roomId !== roomId) return;
       setRoom(roomData);
 
+      if (prevPhaseRef.current === 'QUESTION' && roomData.phase !== 'QUESTION') {
+        Speech.stop();
+        Speech.speak('הזמן נגמר', {
+          language: 'he-IL',
+          onError: (err) => console.warn('Speech error:', err),
+        });
+      }
+      prevPhaseRef.current = roomData.phase;
+
       if (roomData.endsAt) {
         clearInterval(timerRef.current);
-        announcedRef.current = false; // טיימר חדש החל — מאפסים את ההכרזה
         const offset         = Date.now() - roomData.serverTime;
         const correctedEndsAt = roomData.endsAt + offset;
 
@@ -91,9 +100,6 @@ export default function HostGame() {
           setTimeLeft(remaining);
           if (remaining <= 0) {
             clearInterval(timerRef.current);
-            if (!announcedRef.current) {
-              announcedRef.current = true;
-            }
           }
         };
         update();

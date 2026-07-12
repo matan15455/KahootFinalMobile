@@ -30,7 +30,7 @@ export function AuthProvider({ children }) {
       if (stored && isTokenValid(stored)) {
         setToken(stored);
         const decoded = jwtDecode(stored);
-        setUserId(decoded.id);
+        setUserId(decoded.username);
         connectSocket(stored);
       } else if (stored) {
         // טוקן קיים אבל לא תקף (פג תוקף/פגום) - מנקים אותו
@@ -60,7 +60,7 @@ export function AuthProvider({ children }) {
     await SecureStore.setItemAsync('token', newToken);
     setToken(newToken);
     const decoded = jwtDecode(newToken);
-    setUserId(decoded.id);
+    setUserId(decoded.username);
     connectSocket(newToken);
   };
 
@@ -75,7 +75,7 @@ export function AuthProvider({ children }) {
   return (
     <AuthContext.Provider value={{
       token,
-      userId,
+      username: userId,
       isAuthenticated: !!token,
       login,
       logout,
