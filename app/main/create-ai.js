@@ -381,7 +381,7 @@ export default function CreateAI() {
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color={colors.ink} />
         </TouchableOpacity>
-        <Text style={s.headerTitle}>יצירה עם AI ✨</Text>
+        <Text style={s.headerTitle}>יצירה עם AI</Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -394,36 +394,28 @@ export default function CreateAI() {
         {/* ══ Step 1 — Generate form ══ */}
         {!quiz && (
           <View style={s.formCard}>
-            {/* Art */}
-            <View style={s.art}>
-              <View style={s.artBlur} />
-              <EpShape kind="burst" color={colors.ans1} size={52} />
-            </View>
 
-            <Text style={s.kicker}>✦ חידון חדש · בעזרת AI</Text>
             <Text style={s.title}>
-              תנו ל-AI{'\n'}
-              <Text style={{ color: colors.primary }}>להציע.</Text>
+              יצירה עם AI{'\n'}
             </Text>
             <Text style={s.sub}>
-              הזינו נושא, בחרו רמת קושי וכמות שאלות.
-              ה-AI ייצור טיוטה ואתם תערכו לפני השמירה.
+             בחר נושא והנחיות וה-AI ייצור בשבילך את השאלות. תוכל גם לערוך אחרי זה
             </Text>
 
-            <View style={{ gap: 16, marginTop: 22 }}>
+            <View style={{ gap: 12, marginTop: 22 }}>
               {/* נושא */}
               <View>
                 <Text style={s.label}>נושא החידון</Text>
                 <TextInput
                   style={[s.input, s.textarea]}
-                  placeholder="לדוגמה: מלחמות העולם, פיזיקה כיתה י', ספרי בראשית…"
+                  placeholder="לדוגמה: מלחמות העולם, פיזיקה, ספרי בראשית…"
                   placeholderTextColor={colors.inkMute}
                   textAlign="right" textAlignVertical="top"
                   multiline maxLength={500} autoFocus
                   value={topic}
                   onChangeText={(v) => { setTopic(v); if (error) setError(''); }}
                 />
-                <Text style={s.hint}>ככל שהנושא יותר ספציפי — השאלות יותר מדויקות.</Text>
+                <Text style={s.hint}>ככל שהנושא יותר ספציפי - השאלות יותר מדויקות.</Text>
               </View>
 
               {/* הנחיות (אופציונלי) — כמו באתר */}
@@ -486,8 +478,7 @@ export default function CreateAI() {
                 </View>
               ) : (
                 <View style={{ flexDirection: 'row-reverse', alignItems: 'center', gap: 8 }}>
-                  <Text style={s.generateBtnSpark}>✦</Text>
-                  <Text style={s.generateBtnText}>צרו עבורי חידון</Text>
+                  <Text style={s.generateBtnText}>צור חידון</Text>
                 </View>
               )}
             </TouchableOpacity>
@@ -500,7 +491,6 @@ export default function CreateAI() {
             {/* Header */}
             <View style={s.reviewHead}>
               <View style={{ flex: 1, alignItems: 'flex-end' }}>
-                <Text style={s.kicker}>✦ טיוטה של AI · עריכה לפני שמירה</Text>
                 <Text style={s.reviewTitle}>{quiz.title}</Text>
                 {quiz.description && quiz.description !== 'AI quiz' ? (
                   <Text style={s.reviewDesc}>{quiz.description}</Text>
@@ -508,7 +498,7 @@ export default function CreateAI() {
               </View>
               <View style={s.reviewActions}>
                 <TouchableOpacity style={s.ghostBtn} onPress={handleReset}>
-                  <Text style={s.ghostBtnText}>← התחל מחדש</Text>
+                  <Text style={s.ghostBtnText}> התחל מחדש</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[s.primaryBtn, (saving || questions.length === 0) && { opacity: 0.6 }]}

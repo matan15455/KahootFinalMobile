@@ -72,7 +72,7 @@ export default function JoinRoom() {
             <View style={joinStyles.youStatus}>
               <View style={joinStyles.pulseDot}/>
               <Text style={joinStyles.youStatusText}>
-                ממתינים שהמנחה יתחיל את החידון
+                ממתין שהמארח יתחיל את המשחק
               </Text>
             </View>
           </View>
@@ -143,9 +143,6 @@ export default function JoinRoom() {
         <View style={joinStyles.formCard}>
           {/* Hero */}
           <View>
-            <View style={joinStyles.kicker}>
-              <EpShape kind="hex" size={14} color={colors.ans2}/>
-            </View>
             <Text style={joinStyles.title}>
               הצטרף{'\n'}
               <Text style={{ color: colors.primary }}>לחדר.</Text>
@@ -177,7 +174,7 @@ export default function JoinRoom() {
               <Text style={joinStyles.label}>השם שלך</Text>
               <TextInput
                 style={joinStyles.input}
-                placeholder="לדוגמה: יעל"
+                placeholder="לדוגמה: מתן"
                 placeholderTextColor={colors.inkMute}
                 textAlign="right"
                 value={nickname}
@@ -207,7 +204,6 @@ export default function JoinRoom() {
             <Text style={joinStyles.submitText}>
               {joining ? 'מצטרף…' : 'להצטרפות למשחק'}
             </Text>
-            <Text style={joinStyles.submitArrow}>←</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

@@ -130,7 +130,7 @@ export default function SessionView() {
       {/* ── ראש ── */}
       <View style={s.topBar}>
         <TouchableOpacity style={s.backBtn} onPress={() => router.back()}>
-          <Text style={s.backBtnText}>← חזרה</Text>
+          <Text style={s.backBtnText}> חזרה</Text>
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
           <Text style={s.kicker}>דוח משחק · {dateStr} · {timeStr}</Text>
@@ -140,9 +140,9 @@ export default function SessionView() {
 
       {/* ── chips מידע ── */}
       <View style={s.metaChips}>
-        <MetaChip label={`👥 ${session.players.length} שחקנים`} />
-        <MetaChip label={`❓ ${session.questions.length} שאלות`} />
-        <MetaChip label={`✓ ${overallCorrectPct}% נכונות`} />
+        <MetaChip label={`${session.players.length} שחקנים`} />
+        <MetaChip label={`${session.questions.length} שאלות`} />
+        <MetaChip label={`${overallCorrectPct}% נכונות`} />
       </View>
 
       {/* ── טאבים ── */}
@@ -303,7 +303,7 @@ export default function SessionView() {
         {tab === 'players' && selectedPlayer && (
           <View style={s.panel}>
             <TouchableOpacity style={s.backInner} onPress={() => setSelectedPlayer(null)}>
-              <Text style={s.backInnerText}>← כל השחקנים</Text>
+              <Text style={s.backInnerText}> כל השחקנים</Text>
             </TouchableOpacity>
 
             {/* Hero */}
@@ -397,7 +397,7 @@ export default function SessionView() {
           return (
             <View style={s.panel}>
               <TouchableOpacity style={s.backInner} onPress={() => setSelectedQuestion(null)}>
-                <Text style={s.backInnerText}>← כל השאלות</Text>
+                <Text style={s.backInnerText}> כל השאלות</Text>
               </TouchableOpacity>
 
               {/* Hero שאלה */}

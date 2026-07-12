@@ -193,7 +193,6 @@ export default function PlayerGame() {
 
         {/* פירוט — כמו .ep-pg__sum-wrap */}
         <View style={s.sumWrap}>
-          <Text style={s.sumLabel}>איך הצביעו אחרים</Text>
           {entries.map(([answer, count], idx) => {
             const meta      = ANSWER_META[idx % ANSWER_META.length];
             const isCorrect = room.summary.correctAnswer === answer;
@@ -237,7 +236,7 @@ export default function PlayerGame() {
         {/* waiting pill */}
         <View style={[s.waitPill, { alignSelf: 'center' }]}>
           <View style={s.pulseDot} />
-          <Text style={s.waitPillText}>ממתינים שהמנחה ימשיך…</Text>
+          <Text style={s.waitPillText}>ממתין שהמארח ימשיך…</Text>
         </View>
       </ScrollView>
     );
@@ -256,7 +255,7 @@ export default function PlayerGame() {
         <ScoreBoard players={room.players} />
         <View style={[s.waitPill, { alignSelf: 'center', marginTop: 20 }]}>
           <View style={s.pulseDot} />
-          <Text style={s.waitPillText}>ממתינים שהמנחה ימשיך…</Text>
+          <Text style={s.waitPillText}>ממתין שהמארח ימשיך…</Text>
         </View>
       </ScrollView>
     );

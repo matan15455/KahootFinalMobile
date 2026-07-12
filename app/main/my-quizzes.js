@@ -78,16 +78,15 @@ export default function MyQuizzes() {
   const renderHeader = () => (
     <View style={myqStyles.header}>
       <View style={{ flex: 1 }}>
+        <Text style={myqStyles.title}>החידונים שלי</Text>
         <Text style={myqStyles.kicker}>
-          הספרייה שלך
           {count > 0 && (
             <Text style={myqStyles.kickerStat}>
-              {' · '}{count} {count === 1 ? 'חידון' : 'חידונים'}
+              {''} {count === 1 ? 'חידון אחד' :count + " " + 'חידונים'}
               {totalQ > 0 && `  ·  ${totalQ} שאלות`}
             </Text>
           )}
         </Text>
-        <Text style={myqStyles.title}>החידונים שלי</Text>
       </View>
 
       {count > 0 && (

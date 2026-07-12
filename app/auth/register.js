@@ -56,9 +56,9 @@ export default function Register() {
   };
 
   const chips = [
-    { c: colors.ans1, k: 'burst', t: 'חינם לחלוטין'      },
-    { c: colors.ans3, k: 'plus',  t: 'ללא הגבלת חידונים' },
-    { c: colors.ans4, k: 'wave',  t: 'עברית מלאה'         },
+    { c: colors.ans1, k: 'burst', t: 'חידונים מבוססי AI'      },
+    { c: colors.ans3, k: 'plus',  t: 'סטטיסטיקות' },
+    { c: colors.ans4, k: 'wave',  t: 'זמן אמת'         },
   ];
 
   return (
@@ -82,14 +82,10 @@ export default function Register() {
 
           <View style={{ marginTop: 22 }}>
             <View style={regStyles.kicker}>
-              <View style={regStyles.kickerDot}/>
-              <Text style={regStyles.kickerText}>
-                הצטרפו לקהילה
-              </Text>
             </View>
             <Text style={regStyles.heroTitle}>
-              שני דקות להרשמה,{'\n'}
-              שנים של <Text style={{ color: colors.ans3 }}>חידונים.</Text>
+              למידה{'\n'}
+              <Text style={{ color: colors.ans3 }}>בכיף.</Text>
             </Text>
           </View>
 
@@ -108,16 +104,13 @@ export default function Register() {
           <View>
             <Text style={regStyles.formKicker}>הרשמה</Text>
             <Text style={regStyles.formTitle}>צור חשבון</Text>
-            <Text style={regStyles.formSub}>
-              רק שם משתמש וסיסמה · 30 שניות
-            </Text>
           </View>
 
           <View style={{ gap: 14 }}>
             {/* שם משתמש */}
             <Field
               label="שם משתמש"
-              placeholder="בחרו שם משתמש"
+              placeholder="בחר שם משתמש"
               value={username} onChangeText={setUsername}
               autoComplete="username"
               autoCapitalize="none"
@@ -135,7 +128,7 @@ export default function Register() {
               </View>
               <TextInput
                 style={regStyles.input}
-                placeholder="לפחות 8 תווים"
+                placeholder="••••••••"
                 placeholderTextColor={colors.inkMute}
                 secureTextEntry={!showPwd}
                 autoComplete="new-password"
@@ -151,7 +144,7 @@ export default function Register() {
             {/* אימות סיסמה */}
             <Field
               label="אימות סיסמה"
-              placeholder="הקלידו את הסיסמה שוב"
+              placeholder="הקלד את הסיסמה שוב"
               value={confirmPassword} onChangeText={setConfirmPassword}
               secureTextEntry={!showPwd}
               autoComplete="new-password"
@@ -178,7 +171,6 @@ export default function Register() {
               ? <ActivityIndicator color={colors.paper}/>
               : <>
                   <Text style={regStyles.submitText}>הירשם</Text>
-                  <Text style={regStyles.submitArrow}>←</Text>
                 </>
             }
           </TouchableOpacity>
@@ -190,7 +182,7 @@ export default function Register() {
               style={[regStyles.link, { color: colors.primary }]}
               onPress={() => router.push('/auth/login')}
             >
-              התחבר ←
+              התחבר
             </Text>
           </Text>
         </View>

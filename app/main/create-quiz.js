@@ -21,11 +21,9 @@ export default function CreateQuiz() {
     >
       {/* ── Header ── */}
       <View style={{ alignItems: 'center', marginBottom: 30 }}>
-        <Text style={cqStyles.kicker}>יצירת חידון</Text>
-        <Text style={cqStyles.title}>איך נתחיל?</Text>
+        <Text style={cqStyles.title}>בחר מה מתאים לך</Text>
         <Text style={cqStyles.sub}>
-          בחרו את הדרך שמתאימה לכם — אפשר להתחיל ידני,{'\n'}
-          או לתת ל-AI להציע לכם שאלות לנושא שאתם בוחרים.
+         אפשר להתחיל ידני, או לתת לAI להציע לכם שאלות לנושא שאתם בוחרים.
         </Text>
       </View>
 
@@ -43,20 +41,14 @@ export default function CreateQuiz() {
         <View style={{ gap: 12 }}>
           <Text style={cqStyles.cardTitle}>יצירה ידנית</Text>
           <Text style={cqStyles.cardDesc}>
-            בנו את החידון שלכם שאלה-שאלה. שליטה מלאה בטקסט,{'\n'}
-            בתשובות, בזמן ובניקוד של כל שאלה.
+           בנה את החידון שלך שאלה שאלה. שליטה מלאה בטקסט, בתשובות, בזמן ובניקוד של כל שאלה.
           </Text>
 
-          <View style={{ gap: 6, marginTop: 6 }}>
-            <Bullet text="שליטה מלאה" dark={false}/>
-            <Bullet text="ללא הגבלת אורך" dark={false}/>
-            <Bullet text="עריכה חופשית" dark={false}/>
-          </View>
+
         </View>
 
         <View style={cqStyles.cardBtnGhost}>
-          <Text style={cqStyles.cardBtnGhostText}>התחילו ידנית</Text>
-          <Text style={cqStyles.arrow}>←</Text>
+          <Text style={cqStyles.cardBtnGhostText}>צור ידנית</Text>
         </View>
       </TouchableOpacity>
 
@@ -66,10 +58,6 @@ export default function CreateQuiz() {
         activeOpacity={0.9}
         onPress={() => router.push('/main/create-ai')}
       >
-        {/* Tag "חדש · AI" */}
-        <View style={cqStyles.tag}>
-          <Text style={cqStyles.tagText}>חדש · AI</Text>
-        </View>
 
         <View style={cqStyles.art}>
           <View style={[cqStyles.shadowBlur, { backgroundColor: colors.ans1, opacity: 0.18 }]}/>
@@ -79,8 +67,7 @@ export default function CreateQuiz() {
         <View style={{ gap: 12 }}>
           <Text style={[cqStyles.cardTitle, { color: colors.paper }]}>יצירה עם AI</Text>
           <Text style={[cqStyles.cardDesc, { color: 'rgba(251,248,241,0.7)' }]}>
-            בחרו נושא ורמת קושי — בינה מלאכותית תייצר טיוטה{'\n'}
-            של חידון שלם, ואתם תערכו וישפרו לפני השמירה.
+           בחר נושא והנחיות וה-AI ייצור בשבילך את השאלות
           </Text>
 
           <View style={{ gap: 6, marginTop: 6 }}>
@@ -91,15 +78,9 @@ export default function CreateQuiz() {
         </View>
 
         <View style={cqStyles.cardBtnLime}>
-          <Text style={cqStyles.cardBtnLimeText}>צרו עם AI</Text>
-          <Text style={[cqStyles.arrow, { color: colors.ink }]}>←</Text>
+          <Text style={cqStyles.cardBtnLimeText}>צור עם AI</Text>
         </View>
       </TouchableOpacity>
-
-      {/* ── Foot ── */}
-      <Text style={cqStyles.foot}>
-        תוכלו לשנות הכל אחר כך — שתי הדרכים מובילות לאותו עורך.
-      </Text>
     </ScrollView>
   );
 }

@@ -94,18 +94,13 @@ export default function CreateRoom() {
             <Text style={crStyles.kickerText}>חדר פעיל</Text>
           </View>
 
-          <Text style={crStyles.title}>החדר מוכן.</Text>
+          <Text style={crStyles.title}>החדר נוצר</Text>
           <Text style={crStyles.sub}>
-            שתפו את הקוד או הקישור.{'\n'}
-            המשחק יתחיל כשתלחצו על "התחל".
+           שתף את הקוד המשחק יתחיל כשתלחץ על התחל משחק.
           </Text>
 
           {/* PIN box */}
           <View style={crStyles.pinWrap}>
-            <Text style={crStyles.pinLabel}>
-              הצטרפו ב־<Text style={{ fontWeight: '700', color: colors.ink }}>eduplay.app</Text>
-              {' · הקלידו'}
-            </Text>
             <View style={crStyles.pinRow}>
               {pinDigits.map((d, i) => (
                 <View key={i} style={crStyles.pinDigit}>
@@ -157,7 +152,7 @@ export default function CreateRoom() {
                 <Text style={{ color: '#fff', fontWeight: '900', fontSize: 12 }}>!</Text>
               </View>
               <Text style={crStyles.hintText}>
-                לא ניתן להתחיל בלי שחקנים — חכו שמישהו יצטרף.
+               לא ניתן להתחיל משחק בלי שחקנים חכה שמישהו יצטרף.
               </Text>
             </View>
           )}
@@ -173,7 +168,7 @@ export default function CreateRoom() {
             <View style={crStyles.rosterStatus}>
               <View style={crStyles.pulseDot}/>
               <Text style={crStyles.rosterStatusText}>
-                ממתינים לעוד מצטרפים…
+ממתין לעוד מצטרפים…
               </Text>
             </View>
           </View>
@@ -182,7 +177,7 @@ export default function CreateRoom() {
             <View style={crStyles.rosterEmpty}>
               <EpShape kind="hex" size={36} color="rgba(255,255,255,0.18)"/>
               <Text style={crStyles.rosterEmptyText}>
-                החדר ריק לעת עתה.{'\n'}שתפו את הקוד עם השחקנים.
+                החדר ריק .{'\n'}שתף את הקוד עם השחקנים.
               </Text>
             </View>
           ) : (

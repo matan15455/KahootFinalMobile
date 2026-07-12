@@ -126,7 +126,6 @@ export default function Statistics() {
               <Text style={s.searchIcon}>⌕</Text>
               <TextInput
                 style={s.searchInput}
-                placeholder="חיפוש לפי שם חידון…"
                 placeholderTextColor={colors.inkMute}
                 textAlign="right"
                 value={search}
@@ -194,9 +193,9 @@ export default function Statistics() {
                     </View>
 
                     <View style={s.chips}>
-                      <Chip icon="👥" label={`${session.players.length} שחקנים`} />
-                      <Chip icon="❓" label={`${session.questions.length} שאלות`} />
-                      <Chip icon="⭐" label={`ממוצע ${avgScore.toLocaleString()} נק'`} />
+                      <Chip label={`${session.players.length} שחקנים`} />
+                      <Chip label={`${session.questions.length} שאלות`} />
+                      <Chip label={`ממוצע ${avgScore.toLocaleString()} נק'`} />
                       <Chip
                         label={`${correctPct}% נכונות`}
                         color={pctColor}

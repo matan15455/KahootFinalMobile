@@ -34,15 +34,11 @@ function QuizForm({ onNext }) {
 
   return (
     <View style={qfStyles.card}>
-      <View style={qfStyles.art}>
-        <View style={qfStyles.artBlur} />
-        <EpShape kind="hex" color={colors.ans2} size={52} />
-      </View>
+      
 
-      <Text style={qfStyles.kicker}>חידון חדש · שלב 1 מתוך 2</Text>
-      <Text style={qfStyles.title}>בואו נצור משהו טוב.</Text>
+      <Text style={qfStyles.title}>יצירה ידנית</Text>
       <Text style={qfStyles.sub}>
-        קודם — שם ותיאור קצר. אחר כך נוסיף שאלות אחת-אחת.
+       הכנס שם חידון ותיאור (אופציונלי) ואז נעבור לשאלות
       </Text>
 
       <View style={{ gap: 14, marginTop: 22 }}>
@@ -82,7 +78,6 @@ function QuizForm({ onNext }) {
 
       <TouchableOpacity style={qfStyles.submit} activeOpacity={0.85} onPress={handleNext}>
         <Text style={qfStyles.submitText}>המשך ליצירת שאלות</Text>
-        <Text style={qfStyles.submitArrow}>←</Text>
       </TouchableOpacity>
     </View>
   );
@@ -492,7 +487,6 @@ export default function CreateManual() {
             {/* כותרת + actions */}
             <View style={mainStyles.quizHead}>
               <View style={{ flex: 1, alignItems: 'flex-end' }}>
-                <Text style={mainStyles.quizKicker}>עורך חידון · בנייה</Text>
                 <Text style={mainStyles.quizTitle}>{quiz.title}</Text>
                 {quiz.description ? <Text style={mainStyles.quizDesc}>{quiz.description}</Text> : null}
               </View>
@@ -508,7 +502,7 @@ export default function CreateManual() {
                     } else { setQuiz(null); }
                   }}
                 >
-                  <Text style={mainStyles.ghostBtnText}>← חזור</Text>
+                  <Text style={mainStyles.ghostBtnText}> חזור</Text>
                 </TouchableOpacity>
                 {!addingQuestion && questions.length > 0 && (
                   <TouchableOpacity

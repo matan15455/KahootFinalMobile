@@ -138,7 +138,7 @@ export default function HostGame() {
         <View style={s.heroSection}>
           <Text style={s.kicker}>סוף החידון</Text>
           <Text style={s.heroTitle}>
-            ועכשיו — <Text style={{ color: colors.primary }}>הזוכים.</Text>
+           <Text style={{ color: colors.primary }}>הזוכים</Text>
           </Text>
         </View>
         <ScoreBoard players={room.players} />
@@ -147,7 +147,6 @@ export default function HostGame() {
           onPress={() => router.replace('/main/my-quizzes')}
         >
           <Text style={s.nextBtnText}>חזרה לחידונים</Text>
-          <Text style={s.nextBtnArrow}>←</Text>
         </TouchableOpacity>
       </ScrollView>
     );
@@ -168,7 +167,7 @@ export default function HostGame() {
           <Text style={s.kicker}>סיכום</Text>
           <Text style={s.sectionTitle}>תוצאות השאלה</Text>
           <Text style={s.sectionSub}>
-            {totalAnswers} שחקנים ענו · התשובה הנכונה מודגשת
+            {totalAnswers} שחקנים ענו 
           </Text>
         </View>
 
@@ -223,7 +222,6 @@ export default function HostGame() {
 
         <TouchableOpacity style={s.nextBtn} onPress={handleNext}>
           <Text style={s.nextBtnText}>הצג ניקוד</Text>
-          <Text style={s.nextBtnArrow}>←</Text>
         </TouchableOpacity>
       </ScrollView>
     );
@@ -236,13 +234,12 @@ export default function HostGame() {
     return (
       <ScrollView style={s.container} contentContainerStyle={s.scrollContent}>
         <View style={s.topSection}>
-          <Text style={s.kicker}>לוח ניקוד</Text>
+          <Text style={s.kicker}> ניקוד</Text>
           <Text style={s.sectionTitle}>המצב הנוכחי</Text>
         </View>
         <ScoreBoard players={room.players} />
         <TouchableOpacity style={[s.nextBtn, { marginTop: 24 }]} onPress={handleNext}>
           <Text style={s.nextBtnText}>המשך</Text>
-          <Text style={s.nextBtnArrow}>←</Text>
         </TouchableOpacity>
       </ScrollView>
     );
@@ -277,7 +274,7 @@ export default function HostGame() {
 
           <View style={s.qheadRight}>
             <TouchableOpacity style={s.skipBtn} onPress={handleNext}>
-              <Text style={s.skipBtnText}>סיים שאלה ←</Text>
+              <Text style={s.skipBtnText}>סיים שאלה </Text>
             </TouchableOpacity>
           </View>
         </View>

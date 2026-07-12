@@ -41,8 +41,8 @@ export default function Login() {
 
   const chips = [
     { c: colors.ans1, k: 'burst', t: 'חידונים מבוססי AI' },
-    { c: colors.ans3, k: 'plus',  t: 'סטטיסטיקות חיות'  },
-    { c: colors.ans4, k: 'wave',  t: 'ללא הורדה'         },
+    { c: colors.ans3, k: 'plus',  t: 'סטטיסטיקות'  },
+    { c: colors.ans4, k: 'wave',  t: 'זמן אמת'         },
   ];
 
   return (
@@ -66,14 +66,10 @@ export default function Login() {
 
           <View style={{ marginTop: 24 }}>
             <View style={loginStyles.kicker}>
-              <View style={loginStyles.kickerDot}/>
-              <Text style={loginStyles.kickerText}>
-                פלטפורמת חידונים בזמן אמת
-              </Text>
             </View>
             <Text style={loginStyles.heroTitle}>
-              לימוד שמרגיש{'\n'}
-              כמו <Text style={{ color: colors.ans3 }}>משחק.</Text>
+             למידה{'\n'}
+               <Text style={{ color: colors.ans3 }}>בכיף.</Text>
             </Text>
           </View>
 
@@ -92,9 +88,6 @@ export default function Login() {
           <View>
             <Text style={loginStyles.formKicker}>התחברות</Text>
             <Text style={loginStyles.formTitle}>ברוכים השבים</Text>
-            <Text style={loginStyles.formSub}>
-              הזינו שם משתמש וסיסמה כדי להמשיך
-            </Text>
           </View>
 
           <View style={{ gap: 14 }}>
@@ -103,7 +96,7 @@ export default function Login() {
               <Text style={loginStyles.label}>שם משתמש</Text>
               <TextInput
                 style={loginStyles.input}
-                placeholder="הזינו שם משתמש"
+                placeholder="הזן שם משתמש"
                 placeholderTextColor={colors.inkMute}
                 autoCapitalize="none"
                 autoComplete="username"
@@ -156,7 +149,6 @@ export default function Login() {
               ? <ActivityIndicator color={colors.paper}/>
               : <>
                   <Text style={loginStyles.submitText}>התחבר</Text>
-                  <Text style={loginStyles.submitArrow}>←</Text>
                 </>
             }
           </TouchableOpacity>
@@ -176,14 +168,14 @@ export default function Login() {
                 style={[loginStyles.link, { color: colors.primary }]}
                 onPress={() => router.push('/auth/register')}
               >
-                צרו חשבון
+                צור חשבון
               </Text>
             </Text>
             <Text
               style={[loginStyles.footerText, loginStyles.link, { marginTop: 4 }]}
               onPress={() => router.push('/main/join-room')}
             >
-              הצטרפו לחדר ללא הרשמה ←
+              הצטרף לחדר ללא הרשמה 
             </Text>
           </View>
         </View>
