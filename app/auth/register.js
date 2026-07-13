@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState,useEffect  } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
-  KeyboardAvoidingView, Platform, ActivityIndicator, StyleSheet,
+  KeyboardAvoidingView, Platform, ActivityIndicator, StyleSheet,Keyboard
 } from 'react-native';
 import axios from 'axios';
 import { useRouter } from 'expo-router';
@@ -24,6 +24,17 @@ export default function Register() {
 
   const { login } = useAuth();
   const router = useRouter();
+
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener('keyboardDidShow', () => setKeyboardVisible(true));
+    const hideSub = Keyboard.addListener('keyboardDidHide', () => setKeyboardVisible(false));
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   const handleSubmit = async () => {
     setError('');
@@ -83,6 +94,7 @@ export default function Register() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
+         {!keyboardVisible && (
         <View style={regStyles.hero}>
           <View style={[regStyles.blob, regStyles.blobA]}/>
           <View style={[regStyles.blob, regStyles.blobB]}/>
@@ -108,7 +120,7 @@ export default function Register() {
               </View>
             ))}
           </View>
-        </View>
+        </View> )}
 
         <View style={regStyles.form}>
           <View>
