@@ -8,7 +8,7 @@
   "show": "הצג",
   "hide": "הסתר",
   "passwordPlaceholder": "השאר ריק אם אין שינוי",
-  "passwordHint": "לפחות 8 תווים, אות גדולה, ספרה ותו מיוחד",
+  "passwordHint": "לפחות 8 תווים, אות גדולה וספרה",
   "saveChanges": "שמור שינויים",
   "passwordUpdated": "הסיסמה עודכנה בהצלחה!",
   "deleteAccount": "מחיקת חשבון",

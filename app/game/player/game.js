@@ -175,7 +175,6 @@ export default function PlayerGame() {
     return (
       <ScrollView style={s.container} contentContainerStyle={s.scrollContent}>
 
-        {/* Verdict card — כמו .ep-pg__verdict */}
         <View style={[
           s.verdict,
           wasCorrect ? s.verdictCorrect : wasWrong ? s.verdictWrong : s.verdictNeutral,
@@ -272,7 +271,6 @@ export default function PlayerGame() {
     return (
       <View style={[s.container, s.qFull]}>
 
-        {/* ── ראש: chip + timer ── */}
         <View style={s.qhead}>
           <View style={s.chip}>
             <Text style={s.chipText}>
@@ -289,7 +287,10 @@ export default function PlayerGame() {
           )}
         </View>
 
-        {/* ── hint card ── */}
+        <View style={s.qbox}>
+          <Text style={s.qtext}>{room.question.text}</Text>
+        </View>
+
         <View style={s.hintCard}>
           <Text style={s.hintLabel}>
             {selectedAnswer ? 'תשובתך נשלחה' : 'בחרו תשובה'}
@@ -299,7 +300,6 @@ export default function PlayerGame() {
           )}
         </View>
 
-        {/* ── 4 כפתורי תשובה ── */}
         <View style={s.answersGrid}>
           {room.question.answers.map((ans, idx) => {
             const meta       = ANSWER_META[idx % ANSWER_META.length];
@@ -482,8 +482,30 @@ const s = StyleSheet.create({
   hintLabel: { fontFamily: fonts.display, fontWeight: '700', fontSize: 15, color: colors.ink, textAlign: 'right' },
   hintSub: { fontSize: 13, color: colors.ink3, textAlign: 'right' },
 
+  qbox: {
+    backgroundColor: colors.paper,
+    borderWidth: 1,
+    borderColor: 'rgba(20,18,26,0.06)',
+    borderRadius: radii.xl,
+    paddingVertical: 22,
+    paddingHorizontal: 20,
+    marginHorizontal: 16,
+    marginBottom: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 90,
+  },
+  qtext: {
+    fontFamily: fonts.display,
+    fontWeight: '700',
+    fontSize: 20,
+    lineHeight: 26,
+    letterSpacing: -0.02,
+    color: colors.ink,
+    textAlign: 'center',
+  },
   answersGrid: {
-    flexDirection: 'row', flexWrap: 'wrap',
+    flexDirection: 'row-reverse', flexWrap: 'wrap',
     paddingHorizontal: 16, gap: 10, flex: 1,
     alignContent: 'flex-start',
   },

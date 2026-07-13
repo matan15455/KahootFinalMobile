@@ -195,7 +195,7 @@ export default function HostGame() {
 
                 <View style={s.sumBody}>
                   <View style={s.sumHead}>
-                    <View style={{ flexDirection: 'row-reverse', alignItems: 'center', gap: 8 }}>
+                    <View style={{ flexDirection: 'row-reverse', alignItems: 'center', gap: 8,flex: 1 ,minWidth: 0,}}>
                       <Text style={s.sumText} numberOfLines={2}>{answer}</Text>
                       {isCorrect && (
                         <View style={s.correctBadge}>
@@ -376,6 +376,7 @@ const s = StyleSheet.create({
     backgroundColor: colors.paper,
     borderWidth: 1, borderColor: 'rgba(20,18,26,0.06)',
     borderRadius: radii.lg,
+    overflow: 'hidden'
   },
   sumRowCorrect: {
     borderColor: colors.ok,
@@ -469,7 +470,7 @@ const s = StyleSheet.create({
 
   // ── Answer tiles ──
   answersGrid: {
-    flexDirection: 'row', flexWrap: 'wrap',
+    flexDirection: 'row-reverse', flexWrap: 'wrap',
     paddingHorizontal: 20, gap: 12,
   },
   answerTile: {

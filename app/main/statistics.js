@@ -46,7 +46,6 @@ export default function Statistics() {
       });
   }, [sessions]);
 
-  // ── סינון לפי חיפוש בלבד, ממוין תמיד מהחדש לישן ──
   const visible = useMemo(() => {
     let list = sessionsWithRun;
     if (search.trim()) {
@@ -76,7 +75,6 @@ export default function Statistics() {
       >
         {/* ── כותרת ── */}
         <View style={s.head}>
-          <Text style={s.kicker}>היסטוריה</Text>
           <Text style={s.title}>המשחקים שלי</Text>
         </View>
 
