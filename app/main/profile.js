@@ -24,7 +24,6 @@ export default function Profile() {
   const { width, height } = useWindowDimensions();
   const isLandscape = width > height;
 
-  // השרת מאפשר לעדכן רק את הסיסמה (PATCH /user/:username, allowedFields: ["password"])
   const [password, setPassword] = useState('');
   const [loading, setLoading]   = useState(true);
   const [saving, setSaving]     = useState(false);
@@ -37,7 +36,6 @@ export default function Profile() {
     if (!username) return;
     (async () => {
       try {
-        // קריאה לאימות שהמשתמש קיים בשרת (מציגה שגיאה אם לא)
         await axios.get(`${SERVER_URL}/user/${username}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -119,12 +117,10 @@ export default function Profile() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* ══ Hero Card (Avatar + שם + ת.ז) ══ */}
         <View style={profStyles.hero}>
           <View style={[profStyles.blob, profStyles.blobA]}/>
           <View style={[profStyles.blob, profStyles.blobB]}/>
 
-          {/* צורות דקורטיביות */}
           <View style={[profStyles.deco, { top: 14, left: 18 }]}>
             <EpShape kind="burst" size={24} color={colors.ans3}/>
           </View>
@@ -132,7 +128,6 @@ export default function Profile() {
             <EpShape kind="plus" size={18} color={colors.paper}/>
           </View>
 
-          {/* Logout button (top-left of hero) */}
           <TouchableOpacity onPress={handleLogout} style={profStyles.logoutBtn} activeOpacity={0.7}>
             <Ionicons name="log-out-outline" size={22} color={colors.paper}/>
           </TouchableOpacity>

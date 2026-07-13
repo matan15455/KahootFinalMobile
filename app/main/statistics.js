@@ -1,8 +1,3 @@
-// ===================================================================
-// app/main/statistics.js — EduPlay design
-// תואם 1:1 ל-Statistics.jsx של האתר
-// רשימת sessions + סינון + מיון
-// ===================================================================
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView, TextInput,
@@ -15,17 +10,10 @@ import { useAuth } from '../../context/AuthContext';
 import { SERVER_URL } from '../../utils/socket';
 import { colors, fonts, radii } from '../../constants/theme';
 
-const SORT_OPTIONS = [
-  { label: 'חדש → ישן', value: 'newest' },
-  { label: 'ישן → חדש', value: 'oldest' },
-  { label: 'לפי שחקנים', value: 'players' },
-];
-
 export default function Statistics() {
-  const [sessions,  setSessions]  = useState([]);
-  const [loading,   setLoading]   = useState(true);
-  const [search,    setSearch]    = useState('');
-  const [sortBy,    setSortBy]    = useState('newest');
+  const [sessions, setSessions] = useState([]);
+  const [loading,  setLoading]  = useState(true);
+  const [search,   setSearch]   = useState('');
 
   const { token } = useAuth();
   const router    = useRouter();
@@ -47,7 +35,7 @@ export default function Statistics() {
     fetch();
   }, [token]));
 
-  /* ── sessionsWithRun — מספר הפעלה לכל session ── */
+  // ── מספר הפעלה לכל חידון + מיון קבוע מהחדש לישן ──
   const sessionsWithRun = useMemo(() => {
     const runCountMap = {};
     return [...sessions]
@@ -58,20 +46,15 @@ export default function Statistics() {
       });
   }, [sessions]);
 
-  /* ── סינון + מיון ── */
+  // ── סינון לפי חיפוש בלבד, ממוין תמיד מהחדש לישן ──
   const visible = useMemo(() => {
     let list = sessionsWithRun;
     if (search.trim()) {
       const q = search.trim().toLowerCase();
       list = list.filter(s => s.quizTitle.toLowerCase().includes(q));
     }
-    return [...list].sort((a, b) => {
-      if (sortBy === 'newest') return new Date(b.createdAt) - new Date(a.createdAt);
-      if (sortBy === 'oldest') return new Date(a.createdAt) - new Date(b.createdAt);
-      if (sortBy === 'players') return b.players.length - a.players.length;
-      return 0;
-    });
-  }, [sessionsWithRun, search, sortBy]);
+    return [...list].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  }, [sessionsWithRun, search]);
 
   const totalPlayers = sessions.reduce((s, g) => s + g.players.length, 0);
   const uniqueQuizzes = useMemo(() => new Set(sessions.map(s => s.quizId)).size, [sessions]);
@@ -93,6 +76,8 @@ export default function Statistics() {
       >
         {/* ── כותרת ── */}
         <View style={s.head}>
+          <Text style={s.kicker}>היסטוריה</Text>
+          <Text style={s.title}>המשחקים שלי</Text>
         </View>
 
         {/* ── סיכום ── */}
@@ -107,7 +92,7 @@ export default function Statistics() {
         {sessions.length === 0 ? (
           /* ── Empty ── */
           <View style={s.empty}>
-            <Text style={s.emptyTitle}> אין הפעלות עדיין</Text>
+            <Text style={s.emptyTitle}>אין הפעלות עדיין</Text>
             <Text style={s.emptySub}>הפעל חידון וסטטיסטיקות המשחק יופיעו כאן</Text>
             <TouchableOpacity
               style={s.emptyBtn}
@@ -133,21 +118,6 @@ export default function Statistics() {
                   <Text style={s.searchClearText}>✕</Text>
                 </TouchableOpacity>
               ) : null}
-            </View>
-
-            {/* ── מיון ── */}
-            <View style={s.sortRow}>
-              {SORT_OPTIONS.map((opt) => (
-                <TouchableOpacity
-                  key={opt.value}
-                  style={[s.sortBtn, sortBy === opt.value && s.sortBtnActive]}
-                  onPress={() => setSortBy(opt.value)}
-                >
-                  <Text style={[s.sortBtnText, sortBy === opt.value && s.sortBtnTextActive]}>
-                    {opt.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
             </View>
 
             {/* ── רשימה ── */}
@@ -231,7 +201,7 @@ function Chip({ icon, label, color, bg }) {
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.cream },
   centered:  { alignItems: 'center', justifyContent: 'center' },
-  scroll:    { paddingHorizontal: 20, paddingTop: 60, paddingBottom: 120 },
+  scroll:    { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 120 },
 
   loaderText: {
     fontFamily: fonts.num, fontSize: 12, fontWeight: '500',
@@ -271,7 +241,6 @@ const s = StyleSheet.create({
 
   // ── Empty ──
   empty: { marginTop: 40, alignItems: 'center', gap: 12 },
-  emptyIcon: { fontSize: 48, marginBottom: 4 },
   emptyTitle: {
     fontFamily: fonts.display, fontWeight: '800', fontSize: 24,
     letterSpacing: -0.4, color: colors.ink,
@@ -293,7 +262,7 @@ const s = StyleSheet.create({
     flexDirection: 'row-reverse', alignItems: 'center',
     backgroundColor: colors.paper,
     borderWidth: 1, borderColor: 'rgba(20,18,26,0.08)',
-    borderRadius: radii.md, paddingHorizontal: 14, marginBottom: 12,
+    borderRadius: radii.md, paddingHorizontal: 14, marginBottom: 16,
   },
   searchIcon: { fontSize: 16, color: colors.inkMute, marginLeft: 8 },
   searchInput: {
@@ -306,17 +275,6 @@ const s = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', marginRight: 4,
   },
   searchClearText: { color: colors.ink3, fontWeight: '700', fontSize: 11 },
-
-  // ── מיון ──
-  sortRow: { flexDirection: 'row', gap: 8, marginBottom: 16, justifyContent: 'flex-end' },
-  sortBtn: {
-    paddingHorizontal: 14, paddingVertical: 7,
-    borderRadius: radii.pill, borderWidth: 1.5,
-    borderColor: colors.blackAlpha08, backgroundColor: colors.paper,
-  },
-  sortBtnActive: { backgroundColor: colors.ink, borderColor: colors.ink },
-  sortBtnText: { fontFamily: fonts.body, fontSize: 12, fontWeight: '600', color: colors.ink3 },
-  sortBtnTextActive: { color: colors.paper },
 
   // ── No results ──
   noResults: {

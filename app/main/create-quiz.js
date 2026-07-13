@@ -1,8 +1,3 @@
-// ===================================================================
-// app/main/create-quiz.js — EduPlay design (Quiz Creation Mode)
-// תואם ל-QuizCreationMode.jsx של האתר
-// 2 כרטיסים: ידני (paper + hex violet) / AI (ink + burst coral + lime CTA)
-// ===================================================================
 import {
   View, Text, TouchableOpacity, ScrollView, StyleSheet,
 } from 'react-native';
@@ -19,7 +14,6 @@ export default function CreateQuiz() {
       contentContainerStyle={cqStyles.scroll}
       showsVerticalScrollIndicator={false}
     >
-      {/* ── Header ── */}
       <View style={{ alignItems: 'center', marginBottom: 30 }}>
         <Text style={cqStyles.title}>בחר מה מתאים לך</Text>
         <Text style={cqStyles.sub}>
@@ -27,7 +21,6 @@ export default function CreateQuiz() {
         </Text>
       </View>
 
-      {/* ── Manual Card ── */}
       <TouchableOpacity
         style={cqStyles.cardManual}
         activeOpacity={0.85}
@@ -52,7 +45,6 @@ export default function CreateQuiz() {
         </View>
       </TouchableOpacity>
 
-      {/* ── AI Card ── */}
       <TouchableOpacity
         style={cqStyles.cardAI}
         activeOpacity={0.9}
@@ -85,7 +77,6 @@ export default function CreateQuiz() {
   );
 }
 
-/* ── Bullet helper ────────────────────────────────────── */
 function Bullet({ text, dark }) {
   return (
     <View style={{ flexDirection: 'row-reverse', alignItems: 'center', gap: 10 }}>
@@ -195,7 +186,6 @@ const cqStyles = StyleSheet.create({
     color: colors.ink3,
   },
 
-  // CTAs
   cardBtnGhost: {
     flexDirection: 'row-reverse',
     alignItems: 'center',
@@ -222,7 +212,6 @@ const cqStyles = StyleSheet.create({
   },
   arrow: { fontSize: 18, color: colors.ink, fontWeight: '700' },
 
-  // Foot
   foot: {
     fontFamily: fonts.body, fontSize: 13,
     color: colors.inkMute, textAlign: 'center', marginTop: 8,

@@ -1,7 +1,3 @@
-// ===================================================================
-// app/main/_layout.js — EduPlay EpTabBar
-// מוסיף טאב סטטיסטיקות + href:null ל-session
-// ===================================================================
 import { Tabs } from 'expo-router';
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { colors, fonts, radii } from '../../constants/theme';
@@ -15,7 +11,6 @@ const TAB_ITEMS = [
   { name: 'profile',     label: 'אישי',    icon: '👤' },
 ];
 
-/* ── EpTabBar ── */
 function EpTabBar({ state, descriptors, navigation }) {
   return (
     <View style={tb.wrap}>
@@ -54,7 +49,6 @@ function EpTabBar({ state, descriptors, navigation }) {
   );
 }
 
-/* ── Layout ── */
 export default function MainLayout() {
   return (
     <Tabs tabBar={(props) => <EpTabBar {...props} />} screenOptions={{ headerShown: false }}>

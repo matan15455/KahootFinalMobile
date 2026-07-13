@@ -1,13 +1,3 @@
-// ===================================================================
-// app/main/create-ai.js — EduPlay design + logic
-// תואם 1:1 ל-AICreateQuiz.jsx של האתר:
-// - instructions field (אופציונלי)
-// - points = scroll chips 1000-10000
-// - שאלות editable אחרי generate (textarea, זמן, נקודות, radio)
-// - "הוסף שאלה" ידנית אחרי generate
-// - "התחל מחדש" — מאפס הכל ל-step 1
-// - toast צף + reset אחרי שמירה (לא navigate)
-// ===================================================================
 import { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
@@ -24,9 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 const POINTS_OPTIONS = [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000];
 
-/* ─────────────────────────────────────────────────────────
-   כרטיס שאלה editable — תואם .ep-ai__qcard באתר
-───────────────────────────────────────────────────────── */
+
 function EditableQuestion({ q, index, onChange, onRemove }) {
   const updateField = (field, value) => {
     onChange(index, { ...q, [field]: field === 'text' ? value : Number(value) });
@@ -60,7 +48,6 @@ function EditableQuestion({ q, index, onChange, onRemove }) {
 
   return (
     <View style={eqStyles.card}>
-      {/* ראש — מספר + badge AI + מחיקה */}
       <View style={eqStyles.headRow}>
         <Text style={eqStyles.qNum}>שאלה {String(index + 1).padStart(2, '0')}</Text>
         <View style={eqStyles.headEnd}>
@@ -255,18 +242,14 @@ const eqStyles = StyleSheet.create({
   addAnswerText: { fontFamily: fonts.body, fontSize: 13.5, fontWeight: '600', color: colors.ink3 },
 });
 
-/* ─────────────────────────────────────────────────────────
-   מסך ראשי — CreateAI
-───────────────────────────────────────────────────────── */
+// מסך ראשי
 export default function CreateAI() {
-  // שלב 1 — generate form
   const [topic,        setTopic]        = useState('');
   const [instructions, setInstructions] = useState('');  // ← כמו באתר
   const [numQuestions, setNumQuestions] = useState(5);   // ← ברירת מחדל 5 כמו באתר
   const [loading,      setLoading]      = useState(false);
   const [error,        setError]        = useState('');
 
-  // שלב 2 — review
   const [quiz,      setQuiz]      = useState(null);
   const [questions, setQuestions] = useState([]);
   const [saving,    setSaving]    = useState(false);
@@ -275,7 +258,6 @@ export default function CreateAI() {
   const { token } = useAuth();
   const router    = useRouter();
 
-  /* ── Generate ── */
   const handleGenerate = async () => {
     if (!topic.trim()) { setError('יש להזין נושא'); return; }
     setError('');
@@ -307,17 +289,14 @@ export default function CreateAI() {
     }
   };
 
-  /* ── Update question (from EditableQuestion) ── */
   const handleQuestionChange = (idx, updated) => {
     const copy = [...questions]; copy[idx] = updated; setQuestions(copy);
   };
 
-  /* ── Remove question ── */
   const handleRemoveQuestion = (idx) => {
     setQuestions(questions.filter((_, i) => i !== idx));
   };
 
-  /* ── Add blank question ── */
   const handleAddQuestion = () => {
     setQuestions([...questions, {
       text: '', type: 'multiple-choice', time: 30, points: 1000,
@@ -330,7 +309,6 @@ export default function CreateAI() {
     }]);
   };
 
-  /* ── Save ── */
   const handleSave = async () => {
     if (!quiz || questions.length === 0) return;
     try {
@@ -340,7 +318,6 @@ export default function CreateAI() {
         { ...quiz, questions },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      // toast + reset — כמו באתר
       setSuccess(true);
       setTimeout(() => setSuccess(false), 1500);
       setQuiz(null);
@@ -352,7 +329,6 @@ export default function CreateAI() {
     }
   };
 
-  /* ── Reset to step 1 ── */
   const handleReset = () => {
     Alert.alert('לזרוק את הטיוטה?', 'הטיוטה תימחק ותתחיל מחדש.', [
       { text: 'ביטול', style: 'cancel' },
@@ -391,7 +367,6 @@ export default function CreateAI() {
         showsVerticalScrollIndicator={false}
       >
 
-        {/* ══ Step 1 — Generate form ══ */}
         {!quiz && (
           <View style={s.formCard}>
 
@@ -418,7 +393,6 @@ export default function CreateAI() {
                 <Text style={s.hint}>ככל שהנושא יותר ספציפי - השאלות יותר מדויקות.</Text>
               </View>
 
-              {/* הנחיות (אופציונלי) — כמו באתר */}
               <View>
                 <Text style={s.label}>הנחיות לחידון (אופציונלי)</Text>
                 <TextInput
@@ -432,7 +406,6 @@ export default function CreateAI() {
                 />
               </View>
 
-              {/* מספר שאלות — stepper כמו באתר */}
               <View>
                 <Text style={s.label}>מספר שאלות</Text>
                 <View style={s.stepper}>
@@ -465,7 +438,6 @@ export default function CreateAI() {
               ) : null}
             </View>
 
-            {/* Submit */}
             <TouchableOpacity
               style={[s.generateBtn, loading && { opacity: 0.7 }]}
               onPress={handleGenerate} disabled={loading}
@@ -485,10 +457,8 @@ export default function CreateAI() {
           </View>
         )}
 
-        {/* ══ Step 2 — Review & edit ══ */}
         {quiz && (
           <>
-            {/* Header */}
             <View style={s.reviewHead}>
               <View style={{ flex: 1, alignItems: 'flex-end' }}>
                 <Text style={s.reviewTitle}>{quiz.title}</Text>
@@ -538,7 +508,6 @@ export default function CreateAI() {
               />
             ))}
 
-            {/* + הוסף שאלה ידנית — כמו באתר */}
             <TouchableOpacity style={s.addQuestionBtn} onPress={handleAddQuestion}>
               <Text style={s.addQuestionBtnPlus}>+</Text>
               <Text style={s.addQuestionBtnText}>הוסף שאלה</Text>
@@ -576,7 +545,6 @@ const s = StyleSheet.create({
 
   scroll: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 120 },
 
-  // ── Step 1 form card ──
   formCard: {
     backgroundColor: colors.paper, borderRadius: radii.xl,
     borderWidth: 1, borderColor: 'rgba(20,18,26,0.06)',
@@ -618,7 +586,6 @@ const s = StyleSheet.create({
   textarea: { minHeight: 80, paddingTop: 14 },
   hint: { fontSize: 12, color: colors.inkMute, textAlign: 'right', marginTop: 4 },
 
-  // stepper
   stepper: {
     flexDirection: 'row', alignItems: 'stretch',
     backgroundColor: colors.paper,
@@ -659,7 +626,6 @@ const s = StyleSheet.create({
   generateBtnSpark: { color: colors.ans3, fontWeight: '900', fontSize: 16 },
   generateBtnText: { fontFamily: fonts.display, fontSize: 17, fontWeight: '700', color: '#fff' },
 
-  // ── Step 2 ──
   reviewHead: {
     flexDirection: 'row-reverse', justifyContent: 'space-between',
     alignItems: 'flex-end', gap: 16, marginBottom: 20,

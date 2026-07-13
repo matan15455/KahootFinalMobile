@@ -1,8 +1,3 @@
-// ===================================================================
-// app/main/session.js — EduPlay design
-// תואם 1:1 ל-SessionView.jsx של האתר
-// 3 טאבים: סקירה / שחקנים / שאלות
-// ===================================================================
 import { useState, useEffect, useMemo } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView,

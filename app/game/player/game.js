@@ -61,7 +61,8 @@ export default function PlayerGame() {
   const router     = useRouter();
   const { roomId } = useLocalSearchParams();
   const timerRef   = useRef(null);
-  const prevPhaseRef = useRef(null); // הפאזה הקודמת שהתקבלה 
+  const endAnnouncedRef = useRef(false);
+
 
   useEffect(() => {
     const socket = getSocket();
@@ -78,16 +79,19 @@ export default function PlayerGame() {
         setEarned(null);
       }
 
-      // ההכרזה - פעם אחת בדיוק, כשעוברים מ-QUESTION לפאזה אחרת
-      if (prevPhaseRef.current === 'QUESTION' && roomData.phase !== 'QUESTION') {
+      if (roomData.phase === 'QUESTION') {
+        setSelectedAnswer(null);
+        setEarned(null);
+      }
+
+      if (roomData.phase === 'END' && !endAnnouncedRef.current) {
+        endAnnouncedRef.current = true;
         Speech.stop();
-        Speech.speak('הזמן נגמר', {
+        Speech.speak('החידון הסתיים', {
           language: 'he-IL',
           onError: (err) => console.warn('Speech error:', err),
         });
       }
-      
-      prevPhaseRef.current = roomData.phase;
 
       // הטיימר - רק לתצוגה (TimerRing), לא נוגע בהכרזה
       if (roomData.endsAt) {

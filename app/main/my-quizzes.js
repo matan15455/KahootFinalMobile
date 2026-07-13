@@ -1,9 +1,3 @@
-// ===================================================================
-// app/main/my-quizzes.js — EduPlay design
-// תואם לאתר (MyQuizzes.jsx): רקע cream, כותרת ענקית, kicker עם
-// סטטיסטיקות, CTA פרימרי, גריד כרטיסי QuizCard עם פס צבעוני,
-// ומצב ריק עם 4 צורות גיאומטריות
-// ===================================================================
 import { useState, useCallback } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity,
@@ -47,8 +41,11 @@ export default function MyQuizzes() {
     }
   };
 
+
+  // כל פעם שהמשתמש נכנס למסך הזה
   useFocusEffect(useCallback(() => { fetchQuizzes(); }, []));
 
+  // מחיקת חידון
   const handleDelete = (id) => {
     Alert.alert('מחיקת חידון', 'למחוק את החידון לצמיתות?', [
       { text: 'ביטול', style: 'cancel' },
@@ -68,7 +65,7 @@ export default function MyQuizzes() {
     ]);
   };
 
-  // ── Loading ──
+  // אם המסך טוען
   if (loading && !refreshing) {
     return (
       <View style={[myqStyles.container, myqStyles.center]}>
@@ -81,7 +78,6 @@ export default function MyQuizzes() {
   const count = quizzes.length;
   const totalQ = quizzes.reduce((s, q) => s + (q.questions?.length || 0), 0);
 
-  // ── Header (sticky-ish) ──
   const renderHeader = () => (
     <View style={myqStyles.header}>
       <View style={{ flex: 1 }}>
@@ -109,7 +105,6 @@ export default function MyQuizzes() {
     </View>
   );
 
-  // ── Empty State ──
   const renderEmpty = () => (
     <View style={myqStyles.empty}>
       <View style={myqStyles.emptyArt}>

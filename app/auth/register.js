@@ -83,7 +83,6 @@ export default function Register() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* ===== Brand hero ===== */}
         <View style={regStyles.hero}>
           <View style={[regStyles.blob, regStyles.blobA]}/>
           <View style={[regStyles.blob, regStyles.blobB]}/>
@@ -111,7 +110,6 @@ export default function Register() {
           </View>
         </View>
 
-        {/* ===== Form ===== */}
         <View style={regStyles.form}>
           <View>
             <Text style={regStyles.formKicker}>הרשמה</Text>
@@ -175,7 +173,7 @@ export default function Register() {
             ) : null}
           </View>
 
-          {/* Submit */}
+          {/* הגשה */}
           <TouchableOpacity
             style={regStyles.submit}
             activeOpacity={0.85}
@@ -206,7 +204,6 @@ export default function Register() {
   );
 }
 
-/* ── Field helper ───────────────────────────────────────── */
 function Field({ label, ...inputProps }) {
   return (
     <View>
@@ -222,7 +219,6 @@ function Field({ label, ...inputProps }) {
 }
 
 const regStyles = StyleSheet.create({
-  // ─── HERO ───
   hero: {
     backgroundColor: colors.ink,
     paddingHorizontal: 24,
@@ -255,7 +251,6 @@ const regStyles = StyleSheet.create({
   },
   chipText: { color: colors.paper, fontFamily: fonts.body, fontSize: 12, fontWeight: '600' },
 
-  // ─── FORM ───
   form: {
     flex: 1,
     paddingHorizontal: 24,
@@ -315,7 +310,6 @@ const regStyles = StyleSheet.create({
   errorIconText: { color: '#fff', fontWeight: '900', fontSize: 12 },
   errorText: { color: colors.bad, fontSize: 14, flex: 1, textAlign: 'right' },
 
-  // Submit
   submit: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 10,

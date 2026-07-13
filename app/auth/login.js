@@ -55,7 +55,6 @@ export default function Login() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* ===== Brand hero (כמו צד שמאל באתר) ===== */}
         <View style={loginStyles.hero}>
           <View style={[loginStyles.blob, loginStyles.blobA]}/>
           <View style={[loginStyles.blob, loginStyles.blobB]}/>
@@ -83,7 +82,6 @@ export default function Login() {
           </View>
         </View>
 
-        {/* ===== Form (כמו צד ימין באתר) ===== */}
         <View style={loginStyles.form}>
           <View>
             <Text style={loginStyles.formKicker}>התחברות</Text>
@@ -106,7 +104,7 @@ export default function Login() {
               />
             </View>
 
-            {/* Password */}
+            {/* סיסמה */}
             <View>
               <View style={loginStyles.labelRow}>
                 <Text style={loginStyles.label}>סיסמה</Text>
@@ -138,7 +136,7 @@ export default function Login() {
             ) : null}
           </View>
 
-          {/* Submit */}
+          {/* הגשה */}
           <TouchableOpacity
             style={loginStyles.submit}
             activeOpacity={0.85}
@@ -153,14 +151,12 @@ export default function Login() {
             }
           </TouchableOpacity>
 
-          {/* Divider "או" */}
           <View style={loginStyles.divider}>
             <View style={loginStyles.dividerLine}/>
             <Text style={loginStyles.dividerText}>או</Text>
             <View style={loginStyles.dividerLine}/>
           </View>
 
-          {/* Footer links */}
           <View style={{ alignItems: 'center', gap: 6 }}>
             <Text style={loginStyles.footerText}>
               חדש כאן?{' '}
@@ -179,7 +175,6 @@ export default function Login() {
 }
 
 const loginStyles = StyleSheet.create({
-  // ─── HERO (top, ink) ───
   hero: {
     backgroundColor: colors.ink,
     paddingHorizontal: 24,
@@ -212,7 +207,6 @@ const loginStyles = StyleSheet.create({
   },
   chipText: { color: colors.paper, fontFamily: fonts.body, fontSize: 12, fontWeight: '600' },
 
-  // ─── FORM (bottom, cream) ───
   form: {
     flex: 1,
     paddingHorizontal: 24,
@@ -268,7 +262,6 @@ const loginStyles = StyleSheet.create({
   errorIconText: { color: '#fff', fontWeight: '900', fontSize: 12 },
   errorText: { color: colors.bad, fontSize: 14, flex: 1, textAlign: 'right' },
 
-  // Submit (lift shadow כמו באתר)
   submit: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 10,
@@ -283,7 +276,6 @@ const loginStyles = StyleSheet.create({
   submitText: { color: colors.paper, fontFamily: fonts.display, fontSize: 17, fontWeight: '700' },
   submitArrow: { color: colors.paper, fontSize: 20, fontWeight: '700' },
 
-  // "או" divider
   divider: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   dividerLine: { flex: 1, height: 1, backgroundColor: 'rgba(20,18,26,0.1)' },
   dividerText: { fontFamily: fonts.num, color: colors.inkMute, fontSize: 13 },

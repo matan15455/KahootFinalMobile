@@ -1,8 +1,3 @@
-// ===================================================================
-// app/main/join-room.js — EduPlay design
-// תואם ל-JoinScreen.jsx של האתר
-// 2 מצבים: טופס הצטרפות + לובי המתנה (אחרי join)
-// ===================================================================
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, FlatList,
@@ -34,7 +29,8 @@ export default function JoinRoom() {
     if (!socket) return;
 
     const handleRoomUpdated = (data) => {
-      if (roomRef.current && data.roomId !== roomRef.current.roomId) return;
+      if (roomRef.current && data.roomId !== roomRef.current.roomId) 
+        return;
       setRoom(data);
       if (data.phase === 'QUESTION') {
         router.replace(`/game/player/game?roomId=${data.roomId}`);
@@ -62,13 +58,12 @@ export default function JoinRoom() {
     });
   };
 
-  // ═══ Lobby (אחרי join) ═══════════════════════════════════
+  // ═══ Lobby  ═══════════════════════════════════
   if (room) {
     return (
       <View style={joinStyles.container}>
         <ScrollView contentContainerStyle={joinStyles.lobby} showsVerticalScrollIndicator={false}>
 
-          {/* "אתה" — dark hero */}
           <View style={joinStyles.you}>
             <View style={joinStyles.youBlob}/>
             <Text style={joinStyles.youLabel}>השם שלך בחדר</Text>
@@ -81,7 +76,6 @@ export default function JoinRoom() {
             </View>
           </View>
 
-          {/* Roster */}
           <View style={joinStyles.roster}>
             <View style={joinStyles.rosterHead}>
               <Text style={joinStyles.rosterTitle}>בחדר עכשיו</Text>
@@ -133,7 +127,6 @@ export default function JoinRoom() {
     );
   }
 
-  // ═══ Join form ═══════════════════════════════════════════
   return (
     <KeyboardAvoidingView
       style={joinStyles.container}
@@ -145,7 +138,6 @@ export default function JoinRoom() {
         showsVerticalScrollIndicator={false}
       >
         <View style={joinStyles.formCard}>
-          {/* Hero */}
           <View>
             <Text style={joinStyles.title}>
               הצטרף{'\n'}
@@ -158,7 +150,6 @@ export default function JoinRoom() {
 
           {/* Fields */}
           <View style={{ gap: 14, marginTop: 24 }}>
-            {/* PIN input — LTR מרכזי */}
             <View>
               <Text style={joinStyles.label}>קוד חדר</Text>
               <TextInput
@@ -222,7 +213,6 @@ const getJoinStyles = (colors) => StyleSheet.create({
     paddingHorizontal: 20, paddingTop: 60, paddingBottom: 120,
   },
 
-  // ── Form Card ──
   formCard: {
     backgroundColor: colors.paper,
     borderWidth: 1, borderColor: 'rgba(20,18,26,0.06)',
@@ -254,7 +244,6 @@ const getJoinStyles = (colors) => StyleSheet.create({
     color: colors.ink3, marginTop: 10, textAlign: 'right',
   },
 
-  // ── Fields ──
   label: {
     fontFamily: fonts.body, fontSize: 13, fontWeight: '600',
     color: colors.ink3, marginBottom: 8, textAlign: 'right',
@@ -279,7 +268,6 @@ const getJoinStyles = (colors) => StyleSheet.create({
     writingDirection: 'ltr',
   },
 
-  // ── Error ──
   errorBox: {
     flexDirection: 'row-reverse', alignItems: 'flex-start', gap: 10,
     paddingHorizontal: 14, paddingVertical: 12,
@@ -294,7 +282,6 @@ const getJoinStyles = (colors) => StyleSheet.create({
   },
   errorText: { color: colors.bad, fontSize: 14, flex: 1, textAlign: 'right' },
 
-  // ── Submit (primary big) ──
   submit: {
     flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center',
     gap: 10,
@@ -315,7 +302,6 @@ const getJoinStyles = (colors) => StyleSheet.create({
     color: colors.inkMute, textAlign: 'center', marginTop: 18,
   },
 
-  // ═════ LOBBY ═════
   lobby: {
     paddingHorizontal: 20, paddingTop: 60, paddingBottom: 120,
     gap: 14,

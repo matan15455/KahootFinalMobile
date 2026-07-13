@@ -1,7 +1,3 @@
-// ===================================================================
-// EpQuizCard — כרטיס חידון בודד עם פס צבע עליון
-// תאום ל-QuizCard.jsx של האתר
-// ===================================================================
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { colors, fonts, radii } from '../constants/theme';
 import { EpShape, ANSWER_META } from './EpBrand';
@@ -17,27 +13,22 @@ export default function EpQuizCard({ quiz, colorIndex = 0, onPress, onDelete }) 
       onPress={onPress}
       style={cardStyles.card}
     >
-      {/* ── פס צבעוני עליון ── */}
       <View style={[cardStyles.band, { backgroundColor: meta.color }]}>
-        {/* צורה דקורטיבית גדולה ברקע */}
         <View style={cardStyles.bandBg}>
           <EpShape kind={meta.shape} color={ink} size={170}/>
         </View>
 
-        {/* tag עם מספר שאלות */}
         <View style={cardStyles.bandTag}>
           <Text style={[cardStyles.bandTagText, { color: ink }]}>
             {count} {count === 1 ? 'שאלה' : 'שאלות'}
           </Text>
         </View>
 
-        {/* glyph קטן מימין */}
         <View style={cardStyles.bandGlyph}>
           <EpShape kind={meta.shape} color={ink} size={26}/>
         </View>
       </View>
 
-      {/* ── גוף ── */}
       <View style={cardStyles.body}>
         <Text style={cardStyles.title} numberOfLines={2}>
           {quiz.title}

@@ -71,7 +71,8 @@ export default function HostGame() {
   const router    = useRouter();
   const { roomId } = useLocalSearchParams();
   const timerRef  = useRef(null);
-  const prevPhaseRef = useRef(null);
+  const endAnnouncedRef = useRef(false);
+
 
   useEffect(() => {
     const socket = getSocket();
@@ -81,14 +82,14 @@ export default function HostGame() {
       if (roomData.roomId !== roomId) return;
       setRoom(roomData);
 
-      if (prevPhaseRef.current === 'QUESTION' && roomData.phase !== 'QUESTION') {
+     if (roomData.phase === 'END' && !endAnnouncedRef.current) {
+        endAnnouncedRef.current = true;
         Speech.stop();
-        Speech.speak('הזמן נגמר', {
+        Speech.speak('החידון הסתיים', {
           language: 'he-IL',
           onError: (err) => console.warn('Speech error:', err),
         });
       }
-      prevPhaseRef.current = roomData.phase;
 
       if (roomData.endsAt) {
         clearInterval(timerRef.current);
@@ -116,6 +117,7 @@ export default function HostGame() {
     return () => {
       socket.off('roomUpdated', handleRoomUpdated);
       clearInterval(timerRef.current);
+      Speech.stop();
     };
   }, [roomId]);
 

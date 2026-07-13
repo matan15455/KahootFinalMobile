@@ -1,8 +1,3 @@
-// ===================================================================
-// app/main/create-manual.js — EduPlay design + logic
-// תואם 1:1 ל-QuizCreator.jsx + QuizForm.jsx + QuestionForm.jsx של האתר
-// לוגיקה: points=select(1000-10000), toast צף, reset אחרי שמירה, סטטיסטיקות
-// ===================================================================
 import { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
@@ -19,9 +14,6 @@ import { Ionicons } from '@expo/vector-icons';
 
 const POINTS_OPTIONS = [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000];
 
-/* ─────────────────────────────────────────────────────────
-   שלב 1 — QuizForm
-───────────────────────────────────────────────────────── */
 function QuizForm({ onNext }) {
   const [title, setTitle]             = useState('');
   const [description, setDescription] = useState('');
@@ -137,9 +129,7 @@ const qfStyles = StyleSheet.create({
   submitArrow: { color: '#fff', fontSize: 20 },
 });
 
-/* ─────────────────────────────────────────────────────────
-   Shared styles (errorBox used in both forms)
-───────────────────────────────────────────────────────── */
+
 const shared = StyleSheet.create({
   errorBox: {
     flexDirection: 'row-reverse', alignItems: 'flex-start', gap: 10,
@@ -156,10 +146,7 @@ const shared = StyleSheet.create({
   errorText: { color: colors.bad, fontSize: 14, flex: 1, textAlign: 'right' },
 });
 
-/* ─────────────────────────────────────────────────────────
-   QuestionForm — תואם QuestionForm.jsx
-   points = scroll chips 1000–10000 (כמו select באתר)
-───────────────────────────────────────────────────────── */
+
 function QuestionForm({ onAdd, onCancel, index = 0 }) {
   const [text,    setText]    = useState('');
   const [time,    setTime]    = useState(30);
@@ -414,9 +401,7 @@ const aqStyles = StyleSheet.create({
   confirmText: { fontFamily: fonts.display, fontSize: 14.5, fontWeight: '700', color: colors.paper },
 });
 
-/* ─────────────────────────────────────────────────────────
-   מסך ראשי
-───────────────────────────────────────────────────────── */
+// מסך ראשי
 export default function CreateManual() {
   const [quiz,           setQuiz]           = useState(null);
   const [questions,      setQuestions]      = useState([]);
@@ -440,7 +425,6 @@ export default function CreateManual() {
       );
       setSuccess(true);
       setTimeout(() => setSuccess(false), 1500);
-      // כמו באתר: reset ולא navigate
       setQuiz(null);
       setQuestions([]);
     } catch (err) {
@@ -458,7 +442,6 @@ export default function CreateManual() {
       style={{ flex: 1, backgroundColor: colors.cream }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      {/* Toast צף */}
       {success && (
         <View style={mainStyles.toast} pointerEvents="none">
           <View style={mainStyles.toastIcon}><Text style={mainStyles.toastIconText}>✓</Text></View>
@@ -466,7 +449,6 @@ export default function CreateManual() {
         </View>
       )}
 
-      {/* Header */}
       <View style={mainStyles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color={colors.ink} />
@@ -484,7 +466,6 @@ export default function CreateManual() {
 
         {quiz && (
           <>
-            {/* כותרת + actions */}
             <View style={mainStyles.quizHead}>
               <View style={{ flex: 1, alignItems: 'flex-end' }}>
                 <Text style={mainStyles.quizTitle}>{quiz.title}</Text>

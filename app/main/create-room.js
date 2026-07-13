@@ -1,8 +1,3 @@
-// ===================================================================
-// app/main/create-room.js — EduPlay design (Host Lobby)
-// תואם ל-CreateRoom.jsx של האתר
-// PIN ענק עם lift shadow + 2 כפתורי העתקה + START + Roster כהה
-// ===================================================================
 import { useState, useCallback, useRef } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView, FlatList,
@@ -19,7 +14,7 @@ import { EpShape } from '../../components/EpBrand';
 export default function CreateRoom() {
   const [room, setRoom]         = useState(null);
   const [starting, setStarting] = useState(false);
-  const [copied, setCopied]     = useState(null); // 'pin' | 'link' | null
+  const [copied, setCopied]     = useState(null); 
 
   const router = useRouter();
   const { quizId, title } = useLocalSearchParams();
@@ -46,8 +41,10 @@ export default function CreateRoom() {
       roomCreated.current = true;
       socket.emit('createRoom', { quizId });
     };
-    if (socket.connected) createOnce();
-    else socket.once('connect', createOnce);
+    if (socket.connected) 
+      createOnce();
+    else 
+      socket.once('connect', createOnce);
 
     return () => { socket.off('roomUpdated', handleRoomUpdated); };
   }, [quizId]));
@@ -69,7 +66,6 @@ export default function CreateRoom() {
     setTimeout(() => setCopied(null), 1500);
   };
 
-  // ───────── Loading ─────────
   if (!room) {
     return (
       <View style={[crStyles.container, crStyles.center]}>
@@ -86,9 +82,7 @@ export default function CreateRoom() {
     <View style={crStyles.container}>
       <ScrollView contentContainerStyle={crStyles.scroll} showsVerticalScrollIndicator={false}>
 
-        {/* ══ Main Card (PIN + CTA) ══ */}
         <View style={crStyles.mainCard}>
-          {/* Kicker — pulse dot + "חדר פעיל" */}
           <View style={crStyles.kicker}>
             <View style={crStyles.kickerDot}/>
             <Text style={crStyles.kickerText}>חדר פעיל</Text>
@@ -99,7 +93,6 @@ export default function CreateRoom() {
            שתף את הקוד המשחק יתחיל כשתלחץ על התחל משחק.
           </Text>
 
-          {/* PIN box */}
           <View style={crStyles.pinWrap}>
             <View style={crStyles.pinRow}>
               {pinDigits.map((d, i) => (
@@ -110,7 +103,6 @@ export default function CreateRoom() {
             </View>
           </View>
 
-          {/* Copy action */}
           <TouchableOpacity
             style={[crStyles.actBtn, copied === 'pin' && crStyles.actBtnCopied]}
             activeOpacity={0.85}
@@ -122,7 +114,6 @@ export default function CreateRoom() {
             </Text>
           </TouchableOpacity>
 
-          {/* Start CTA — primary */}
           <TouchableOpacity
             style={[
               crStyles.start,
@@ -145,7 +136,6 @@ export default function CreateRoom() {
             )}
           </TouchableOpacity>
 
-          {/* Warning hint */}
           {playerCount === 0 && (
             <View style={crStyles.hint}>
               <View style={crStyles.hintIcon}>
@@ -158,7 +148,6 @@ export default function CreateRoom() {
           )}
         </View>
 
-        {/* ══ Roster Card (dark) ══ */}
         <View style={crStyles.roster}>
           <View style={crStyles.rosterBlob}/>
 
@@ -239,7 +228,6 @@ const crStyles = StyleSheet.create({
     gap: 14,
   },
 
-  // ── Main Card ──
   mainCard: {
     backgroundColor: colors.paper,
     borderWidth: 1, borderColor: 'rgba(20,18,26,0.06)',
@@ -270,7 +258,6 @@ const crStyles = StyleSheet.create({
     color: colors.ink3, textAlign: 'right',
   },
 
-  // ── PIN box ──
   pinWrap: {
     backgroundColor: colors.cream,
     borderRadius: radii.lg,
@@ -298,7 +285,6 @@ const crStyles = StyleSheet.create({
     fontSize: 28, color: colors.ink,
   },
 
-  // ── Copy button ──
   actBtn: {
     flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center',
     gap: 8,
@@ -316,7 +302,6 @@ const crStyles = StyleSheet.create({
     fontSize: 14, color: colors.ink,
   },
 
-  // ── Start (primary big) ──
   start: {
     flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center',
     gap: 8,
@@ -340,7 +325,6 @@ const crStyles = StyleSheet.create({
     color: 'rgba(255,255,255,0.85)',
   },
 
-  // ── Hint ──
   hint: {
     flexDirection: 'row-reverse', alignItems: 'center', gap: 10,
     paddingHorizontal: 14, paddingVertical: 10,
@@ -355,7 +339,6 @@ const crStyles = StyleSheet.create({
   },
   hintText: { color: colors.warn, fontSize: 13, flex: 1, textAlign: 'right' },
 
-  // ══ Roster (dark) ══
   roster: {
     backgroundColor: colors.ink,
     borderRadius: radii.xl,
@@ -389,7 +372,6 @@ const crStyles = StyleSheet.create({
     color: 'rgba(251,248,241,0.75)',
   },
 
-  // Empty state
   rosterEmpty: {
     alignItems: 'center', gap: 14,
     paddingVertical: 28,
@@ -399,7 +381,6 @@ const crStyles = StyleSheet.create({
     color: 'rgba(251,248,241,0.7)', textAlign: 'center',
   },
 
-  // Player item
   player: {
     flex: 1,
     flexDirection: 'row-reverse', alignItems: 'center', gap: 10,
