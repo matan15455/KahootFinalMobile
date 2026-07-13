@@ -64,7 +64,6 @@ export default function MainLayout() {
   );
 }
 
-/* ── Styles ── */
 const tb = StyleSheet.create({
   wrap: {
     position: 'absolute',
