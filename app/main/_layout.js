@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router';
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { colors, fonts, radii } from '../../constants/theme';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const TAB_ITEMS = [
   { name: 'my-quizzes',  label: 'חידונים', icon: '🃏' },
@@ -50,17 +51,19 @@ function EpTabBar({ state, descriptors, navigation }) {
 
 export default function MainLayout() {
   return (
-    <Tabs tabBar={(props) => <EpTabBar {...props} />} screenOptions={{ headerShown: false }}>
-      <Tabs.Screen name="my-quizzes"  />
-      <Tabs.Screen name="join-room"   />
-      <Tabs.Screen name="create-quiz" />
-      <Tabs.Screen name="create-room" options={{ href: null }} />
-      <Tabs.Screen name="create-manual" options={{ href: null }} />
-      <Tabs.Screen name="create-ai"   options={{ href: null }} />
-      <Tabs.Screen name="statistics"  />
-      <Tabs.Screen name="session"     options={{ href: null }} />
-      <Tabs.Screen name="profile"     />
-    </Tabs>
+    <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+      <Tabs tabBar={(props) => <EpTabBar {...props} />} screenOptions={{ headerShown: false }}>
+        <Tabs.Screen name="my-quizzes"  />
+        <Tabs.Screen name="join-room"   />
+        <Tabs.Screen name="create-quiz" />
+        <Tabs.Screen name="create-room" options={{ href: null }} />
+        <Tabs.Screen name="create-manual" options={{ href: null }} />
+        <Tabs.Screen name="create-ai"   options={{ href: null }} />
+        <Tabs.Screen name="statistics"  />
+        <Tabs.Screen name="session"     options={{ href: null }} />
+        <Tabs.Screen name="profile"     />
+      </Tabs>
+    </SafeAreaView>
   );
 }
 

@@ -190,7 +190,7 @@ const loginStyles = StyleSheet.create({
   hero: {
     backgroundColor: colors.ink,
     paddingHorizontal: 24,
-    paddingTop: 60,
+    paddingTop: 20,
     paddingBottom: 32,
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,
