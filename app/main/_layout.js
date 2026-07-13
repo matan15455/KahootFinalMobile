@@ -2,7 +2,6 @@ import { Tabs } from 'expo-router';
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { colors, fonts, radii } from '../../constants/theme';
 
-/* ── 5 טאבים ── */
 const TAB_ITEMS = [
   { name: 'my-quizzes',  label: 'חידונים', icon: '🃏' },
   { name: 'create-quiz', label: 'צור',     icon: '+',  big: true },

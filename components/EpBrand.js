@@ -1,7 +1,4 @@
-// ===================================================================
-// EpBrand — לוגו / שם המותג / צורות (4 צבעי תשובה)
-// תאום ל-frontend/src/components/_shared/EpBrand.jsx
-// ===================================================================
+
 import { View, Text } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { colors, fonts } from '../constants/theme';

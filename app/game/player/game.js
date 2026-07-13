@@ -12,9 +12,7 @@ import ScoreBoard from '../../../components/ScoreBoard';
 
 const { width } = Dimensions.get('window');
 
-/* ─────────────────────────────────────────────────────────
-   Timer — קטן יותר מ-host, כמו .ep-pg__timer
-───────────────────────────────────────────────────────── */
+
 function TimerRing({ timeLeft, totalTime, size = 56 }) {
   const isDanger  = timeLeft !== null && timeLeft <= 5;
   const isWarning = timeLeft !== null && timeLeft > 5 && timeLeft <= 10;
@@ -49,9 +47,7 @@ const tr = StyleSheet.create({
   num: { fontFamily: fonts.num, fontWeight: '700' },
 });
 
-/* ─────────────────────────────────────────────────────────
-   מסך ראשי
-───────────────────────────────────────────────────────── */
+
 export default function PlayerGame() {
   const [room,           setRoom]           = useState(null);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
@@ -93,7 +89,6 @@ export default function PlayerGame() {
         });
       }
 
-      // הטיימר - רק לתצוגה (TimerRing), לא נוגע בהכרזה
       if (roomData.endsAt) {
         clearInterval(timerRef.current);
         const offset = Date.now() - roomData.serverTime;
@@ -137,7 +132,6 @@ export default function PlayerGame() {
     socket.emit('answerQuestion', { roomId, answerText });
   };
 
-  /* ── Loading ── */
   if (!room) {
     return (
       <View style={[s.container, s.centered]}>
@@ -147,9 +141,7 @@ export default function PlayerGame() {
     );
   }
 
-  /* ══════════════════════════════
-     END
-  ══════════════════════════════ */
+
   if (room.phase === 'END') {
     return (
       <ScrollView style={s.container} contentContainerStyle={s.scrollContent}>
@@ -171,9 +163,7 @@ export default function PlayerGame() {
     );
   }
 
-  /* ══════════════════════════════
-     SUMMARY — תוצאה אישית + פירוט
-  ══════════════════════════════ */
+
   if (room.phase === 'SUMMARY' && room.summary) {
     const entries      = Object.entries(room.summary.answersCount);
     const totalAnswers = entries.reduce((sum, [, c]) => sum + c, 0);
@@ -205,7 +195,6 @@ export default function PlayerGame() {
           </Text>
         </View>
 
-        {/* פירוט — כמו .ep-pg__sum-wrap */}
         <View style={s.sumWrap}>
           {entries.map(([answer, count], idx) => {
             const meta      = ANSWER_META[idx % ANSWER_META.length];
@@ -247,7 +236,6 @@ export default function PlayerGame() {
           })}
         </View>
 
-        {/* waiting pill */}
         <View style={[s.waitPill, { alignSelf: 'center' }]}>
           <View style={s.pulseDot} />
           <Text style={s.waitPillText}>ממתין שהמארח ימשיך…</Text>

@@ -21,8 +21,8 @@ export default function RootLayout() {
     SpaceGrotesk_700Bold,
   });
 
-  // עד שהפונטים נטענים — מסך ריק (כדי שלא יהיה flash של פונט ברירת מחדל)
-  if (!loaded) return null;
+  if (!loaded) 
+    return null;
 
   return (
     <AuthProvider>

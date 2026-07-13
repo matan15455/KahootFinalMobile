@@ -30,15 +30,12 @@ function TimerRing({ timeLeft, totalTime, size = 120 }) {
 
   return (
     <View style={[timerStyles.wrap, { width: size, height: size }]}>
-      {/* SVG via View trick — use raw SVG string rendered as a component */}
       <View style={[timerStyles.ring, { width: size, height: size, borderRadius: size / 2 }]}>
-        {/* bg ring */}
         <View style={[timerStyles.bgRing, {
           width: size, height: size, borderRadius: size / 2,
           borderWidth: size * 0.07,
           borderColor: 'rgba(20,18,26,0.1)',
         }]} />
-        {/* progress arc — approximate with border */}
         <View style={[timerStyles.progressRing, {
           width: size, height: size, borderRadius: size / 2,
           borderWidth: size * 0.07,
@@ -61,9 +58,7 @@ const timerStyles = StyleSheet.create({
   num: { fontFamily: fonts.num, fontWeight: '700', lineHeight: undefined },
 });
 
-/* ─────────────────────────────────────────────────────────
-   מסך ראשי
-───────────────────────────────────────────────────────── */
+
 export default function HostGame() {
   const [room,     setRoom]     = useState(null);
   const [timeLeft, setTimeLeft] = useState(null);
@@ -162,7 +157,6 @@ export default function HostGame() {
 
   /* ══════════════════════════════
      SUMMARY — סיכום שאלה
-     bar chart כמו .ep-host__sum באתר
   ══════════════════════════════ */
   if (room.phase === 'SUMMARY' && room.summary) {
     const entries      = Object.entries(room.summary.answersCount);

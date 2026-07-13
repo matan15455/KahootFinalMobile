@@ -1,8 +1,4 @@
-// ===================================================================
-// components/ScoreBoard.js — EduPlay design
-// תואם לעיצוב של האתר: רקע cream/paper, ink text, podium עם
-// צבעי ans, שאר השחקנים ברשימה נקייה
-// ===================================================================
+
 import { View, Text, StyleSheet, FlatList } from 'react-native';
 import { colors, fonts, radii } from '../constants/theme';
 import { EpShape } from './EpBrand';
